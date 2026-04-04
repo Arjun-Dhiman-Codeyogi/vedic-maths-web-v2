@@ -33,7 +33,8 @@ interface UserActivitySummary {
   page_visits: ActivityCount[];
   practice_categories: ActivityCount[];
 }
-interface WeeklyDay { day: string; date: string; active: number; }
+interface WeeklyDay { day: string; date: string; active: number; names: string[]; }
+interface UserDaySession { first: string; last: string; }
 
 interface AdminUser {
   user_id: string;
@@ -87,6 +88,7 @@ const AdminPage = () => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [weeklyData, setWeeklyData] = useState<WeeklyDay[]>([]);
   const [dailyUserSet, setDailyUserSet] = useState<Record<string, Set<string>>>({});
+  const [userDayActivity, setUserDayActivity] = useState<Record<string, Record<string, UserDaySession>>>({});
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [selectedHistory, setSelectedHistory] = useState<PracticeHistory | null>(null);
   const [search, setSearch] = useState('');
@@ -122,16 +124,30 @@ const AdminPage = () => {
       return d.toISOString().split('T')[0];
     });
     const dailyUserSet: Record<string, Set<string>> = {};
+    const udActivity: Record<string, Record<string, UserDaySession>> = {};
     for (const row of activityRows) {
-      const date = (row.created_at as string).split('T')[0];
+      const ts = row.created_at as string;
+      const date = ts.split('T')[0];
       if (!dailyUserSet[date]) dailyUserSet[date] = new Set();
       dailyUserSet[date].add(row.user_id);
+      // track first/last activity per user per day
+      if (!udActivity[row.user_id]) udActivity[row.user_id] = {};
+      if (!udActivity[row.user_id][date]) {
+        udActivity[row.user_id][date] = { first: ts, last: ts };
+      } else {
+        if (ts < udActivity[row.user_id][date].first) udActivity[row.user_id][date].first = ts;
+        if (ts > udActivity[row.user_id][date].last) udActivity[row.user_id][date].last = ts;
+      }
     }
     setDailyUserSet(dailyUserSet);
+    setUserDayActivity(udActivity);
+    const profilesById: Record<string, string> = {};
+    for (const p of profiles) profilesById[p.id] = p.full_name || 'Unknown';
     setWeeklyData(past7.map(date => ({
       day: new Date(date + 'T00:00:00').toLocaleDateString('en', { weekday: 'short' }),
       date,
       active: dailyUserSet[date]?.size || 0,
+      names: [...(dailyUserSet[date] || new Set())].map(uid => profilesById[uid] || 'Unknown'),
     })));
 
     // ── Activity map per user ───────────────────────────────────────────
@@ -183,7 +199,7 @@ const AdminPage = () => {
   });
 
   const consistentLearners = users.filter(u =>
-    past7Dates.every(date => dailyUserSet[date]?.has(u.user_id))
+    past7Dates.some(date => dailyUserSet[date]?.has(u.user_id))
   );
   const inactiveUsers = users.filter(u => {
     if (!u.last_active_at) return true;
@@ -273,14 +289,24 @@ const AdminPage = () => {
               <YAxis tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} allowDecimals={false} />
               <Tooltip
                 cursor={{ fill: 'hsl(var(--muted))', radius: 6 }}
-                content={({ active, payload, label }) =>
-                  active && payload?.length ? (
-                    <div className="bg-card border border-border rounded-xl px-3 py-2 shadow-card text-xs">
-                      <p className="font-bold text-foreground">{label}</p>
-                      <p className="text-primary font-semibold">{payload[0].value} active</p>
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const entry = payload[0].payload as WeeklyDay;
+                  return (
+                    <div className="bg-card border border-border rounded-xl px-3 py-2.5 shadow-card text-xs max-w-[180px]">
+                      <p className="font-bold text-foreground mb-1">{label} — {entry.active} active</p>
+                      {entry.names.length > 0 ? (
+                        <div className="space-y-0.5">
+                          {entry.names.map((name, i) => (
+                            <p key={i} className="text-primary font-medium">• {name}</p>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">No activity</p>
+                      )}
                     </div>
-                  ) : null
-                }
+                  );
+                }}
               />
               <Bar dataKey="active" radius={[6, 6, 0, 0]}>
                 {weeklyData.map((entry, i) => (
@@ -303,7 +329,7 @@ const AdminPage = () => {
 
         {/* Consistent Learners + Inactive */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Consistent Learners */}
+          {/* Active This Week */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -315,31 +341,58 @@ const AdminPage = () => {
                 <Trophy className="w-4 h-4 text-level" />
               </div>
               <div>
-                <p className="font-display font-bold text-sm">Consistent Learners</p>
-                <p className="text-[10px] text-muted-foreground">Active every day this week</p>
+                <p className="font-display font-bold text-sm">Active This Week</p>
+                <p className="text-[10px] text-muted-foreground">Visit times & session details</p>
               </div>
             </div>
             {consistentLearners.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-4">No one active all 7 days yet</p>
+              <p className="text-xs text-muted-foreground text-center py-4">No activity this week yet</p>
             ) : (
-              <div className="space-y-2">
-                {consistentLearners.slice(0, 5).map(u => (
-                  <div key={u.user_id}
-                    onClick={() => setSelectedUser(u)}
-                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-muted cursor-pointer transition-colors"
-                  >
-                    <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center text-xs font-display font-bold text-white flex-shrink-0">
-                      {getInitials(u.name)}
+              <div className="space-y-3">
+                {consistentLearners.slice(0, 6).map(u => {
+                  const activeDays = past7Dates.filter(d => dailyUserSet[d]?.has(u.user_id));
+                  // most recent active day session
+                  const latestDate = activeDays[activeDays.length - 1];
+                  const session = userDayActivity[u.user_id]?.[latestDate];
+                  const fmt = (ts: string) => new Date(ts).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+                  const durationMins = session ? Math.round((new Date(session.last).getTime() - new Date(session.first).getTime()) / 60000) : 0;
+                  return (
+                    <div key={u.user_id}
+                      onClick={() => { setSelectedUser(u); setSelectedHistory(null); fetchPracticeHistory(u.user_id).then(setSelectedHistory); }}
+                      className="rounded-xl border border-border p-2.5 hover:bg-muted cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center text-[10px] font-display font-bold text-white flex-shrink-0">
+                          {getInitials(u.name)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold truncate">{u.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{u.xp} XP • 🔥 {u.streak}</p>
+                        </div>
+                        <span className="text-[10px] font-bold text-level bg-level/10 px-1.5 py-0.5 rounded-full flex-shrink-0">{activeDays.length}/7</span>
+                      </div>
+                      {/* Day dots */}
+                      <div className="flex gap-1 mb-2">
+                        {past7Dates.map(date => (
+                          <div key={date} title={new Date(date + 'T00:00:00').toLocaleDateString('en', { weekday: 'short' })}
+                            className={`flex-1 h-1.5 rounded-full ${dailyUserSet[date]?.has(u.user_id) ? 'bg-primary' : 'bg-muted'}`}
+                          />
+                        ))}
+                      </div>
+                      {/* Session times */}
+                      {session && (
+                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                          <span className="text-level font-medium">↓ {fmt(session.first)}</span>
+                          <span>→</span>
+                          <span className="text-secondary font-medium">↑ {fmt(session.last)}</span>
+                          {durationMins > 0 && <span className="ml-auto bg-muted px-1.5 py-0.5 rounded-full">{durationMins}m</span>}
+                        </div>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold truncate">{u.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{u.xp} XP • 🔥 {u.streak}</p>
-                    </div>
-                    <span className="text-[10px] font-bold text-level bg-level/10 px-1.5 py-0.5 rounded-full">7/7</span>
-                  </div>
-                ))}
-                {consistentLearners.length > 5 && (
-                  <p className="text-[10px] text-muted-foreground text-center">+{consistentLearners.length - 5} more</p>
+                  );
+                })}
+                {consistentLearners.length > 6 && (
+                  <p className="text-[10px] text-muted-foreground text-center">+{consistentLearners.length - 6} more</p>
                 )}
               </div>
             )}
