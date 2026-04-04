@@ -317,6 +317,8 @@ const PracticePage = () => {
   const [showVedicHint, setShowVedicHint] = useState(false);
   const [timerPaused, setTimerPaused] = useState(false);
   const [showSolution, setShowSolution] = useState(false);
+  const [questionKey, setQuestionKey] = useState(0);
+  const [xpFloat, setXpFloat] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isPlaying || timeLeft <= 0 || timerPaused) return;
@@ -354,6 +356,8 @@ const PracticePage = () => {
     setResult(null);
     setTimerPaused(false);
     setShowSolution(false);
+    setQuestionKey(0);
+    setXpFloat(null);
   };
 
   const checkAnswer = useCallback(() => {
@@ -370,12 +374,15 @@ const PracticePage = () => {
       setCorrectCount(c => c + 1);
       const xpAward = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
       addXP(xpAward);
+      setXpFloat(xpAward);
+      setTimeout(() => setXpFloat(null), 1000);
       setTimeout(() => {
         setResult(null);
         setUserAnswer('');
         setProblem(generateProblem(difficulty, operation));
         setShowVedicHint(false);
         setShowSolution(false);
+        setQuestionKey(k => k + 1);
       }, 800);
     } else {
       setStreak(0);
@@ -388,6 +395,7 @@ const PracticePage = () => {
         setShowVedicHint(false);
         setShowSolution(false);
         setTimerPaused(false);
+        setQuestionKey(k => k + 1);
       }, 3500);
     }
   }, [userAnswer, problem, difficulty, operation, streak, updateAccuracy]);
@@ -489,10 +497,34 @@ const PracticePage = () => {
         </div>
       </div>
 
-      {/* Progress */}
+      {/* Per-question progress strip */}
       <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-        <motion.div className="h-full gradient-primary rounded-full" style={{ width: `${(timeLeft / 30) * 100}%` }} />
+        <motion.div
+          key={questionKey}
+          className="h-full gradient-primary rounded-full"
+          initial={{ width: '100%' }}
+          animate={{ width: timerPaused ? '100%' : '0%' }}
+          transition={{ duration: 10, ease: 'linear' }}
+        />
       </div>
+
+      {/* XP Float Popup */}
+      <AnimatePresence>
+        {xpFloat !== null && (
+          <motion.div
+            key="xp-float"
+            initial={{ opacity: 1, y: 0, scale: 1 }}
+            animate={{ opacity: 0, y: -40, scale: 1.2 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.9, ease: 'easeOut' }}
+            className="fixed top-32 right-6 z-50 pointer-events-none"
+          >
+            <span className="text-lg font-display font-bold text-level drop-shadow-lg">
+              +{xpFloat} XP ⚡
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Problem Display */}
       <div className="flex-1 flex flex-col items-center justify-center">
