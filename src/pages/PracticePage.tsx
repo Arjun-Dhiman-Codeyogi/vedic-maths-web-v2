@@ -5,6 +5,8 @@ import { useGame } from '@/contexts/GameContext';
 import { Check, Timer, Zap, Brain, Trophy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'react-router-dom';
+import { logActivity } from '@/lib/logActivity';
+import { supabase } from '@/integrations/supabase/client';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type PracticeCategory = 'vedic' | 'finger' | 'brain';
@@ -284,6 +286,13 @@ const PracticePage = () => {
   const { addXP, updateAccuracy, student } = useGame();
   const [searchParams] = useSearchParams();
   const topicParam = searchParams.get('topic');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserId(session?.user?.id ?? null);
+    });
+  }, []);
 
   // Auto-set difficulty based on class grade
   const getDefaultDifficulty = (): Difficulty => {
@@ -318,15 +327,19 @@ const PracticePage = () => {
   useEffect(() => {
     if (timeLeft <= 0 && isPlaying) {
       setIsPlaying(false);
-      addXP(score);
     }
-  }, [timeLeft, addXP, isPlaying, score]);
+  }, [timeLeft, isPlaying]);
+
+  useEffect(() => {
+    if (userId) logActivity(userId, 'practice_category', category);
+  }, [userId]);
 
   const handleCategoryChange = (cat: PracticeCategory) => {
     setCategory(cat);
     const firstOp = categoryOps[cat].ops[0];
     setOperation(firstOp);
     setProblem(generateProblem(difficulty, firstOp));
+    if (userId) logActivity(userId, 'practice_category', cat);
   };
 
   const startGame = () => {
@@ -355,6 +368,8 @@ const PracticePage = () => {
       setScore(s => s + points + streak * 2);
       setStreak(s => s + 1);
       setCorrectCount(c => c + 1);
+      const xpAward = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
+      addXP(xpAward);
       setTimeout(() => {
         setResult(null);
         setUserAnswer('');
