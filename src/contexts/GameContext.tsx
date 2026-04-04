@@ -62,7 +62,15 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userId, setUserId] = useState<string | null>(null);
   const saveTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Load progress from DB
+  // Ensure profile row exists for user
+  const ensureProfileExists = async (uid: string, email: string, displayName: string) => {
+    await supabase.from('profiles').upsert(
+      { id: uid, email, full_name: displayName, role: 'student' },
+      { onConflict: 'id', ignoreDuplicates: true }
+    );
+  };
+
+  // Load progress from DB — create row if missing
   const loadProgress = async (uid: string) => {
     const { data } = await supabase
       .from('student_profiles')
@@ -81,36 +89,45 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         joinedAt: data.created_at ?? prev.joinedAt,
         lastActiveAt: data.last_activity_date ?? prev.lastActiveAt,
       }));
+    } else {
+      // No row yet — insert default row for this user
+      await supabase.from('student_profiles').insert({
+        user_id: uid,
+        total_xp: 0,
+        current_level: 1,
+        daily_streak: 0,
+      });
     }
   };
 
-  // Save progress to DB (debounced)
+  // Save progress to DB (debounced) — upsert handles both insert & update
   const saveProgress = (data: StudentData) => {
     if (!userId) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       await supabase
         .from('student_profiles')
-        .update({
+        .upsert({
+          user_id: userId,
           current_level: data.level,
           total_xp: data.xp,
           daily_streak: data.streak,
           achievements: data.badges,
           grade_level: data.classGrade,
           last_activity_date: new Date().toISOString().split('T')[0],
-        })
-        .eq('user_id', userId);
+        }, { onConflict: 'user_id' });
     }, 1000);
   };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const displayName = session.user.user_metadata?.display_name || 
-                           session.user.email?.split('@')[0] || 'Student';
-        setUserId(session.user.id);
+        const u = session.user;
+        const displayName = u.user_metadata?.display_name || u.email?.split('@')[0] || 'Student';
+        setUserId(u.id);
         setStudent(prev => ({ ...prev, name: displayName }));
-        loadProgress(session.user.id);
+        ensureProfileExists(u.id, u.email || '', displayName);
+        loadProgress(u.id);
       } else {
         setUserId(null);
         setStudent({ ...defaultStudent });
@@ -119,11 +136,12 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const displayName = session.user.user_metadata?.display_name || 
-                           session.user.email?.split('@')[0] || 'Student';
-        setUserId(session.user.id);
+        const u = session.user;
+        const displayName = u.user_metadata?.display_name || u.email?.split('@')[0] || 'Student';
+        setUserId(u.id);
         setStudent(prev => ({ ...prev, name: displayName }));
-        loadProgress(session.user.id);
+        ensureProfileExists(u.id, u.email || '', displayName);
+        loadProgress(u.id);
       }
     });
 
