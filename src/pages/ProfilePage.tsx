@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGame } from '@/contexts/GameContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User as UserIcon, TrendingUp, Target, Zap, Brain, BarChart3, Globe, Flame, LogIn, LogOut, Calendar } from 'lucide-react';
+import { User as UserIcon, TrendingUp, Target, Zap, Brain, BarChart3, Globe, Flame, LogIn, LogOut, Calendar, ShieldCheck } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 
 const ProfilePage = () => {
@@ -73,10 +73,18 @@ const ProfilePage = () => {
         </div>
 
         {user ? (
-          <button onClick={handleLogout} className="flex items-center gap-1.5 bg-destructive/10 text-destructive px-3 py-1.5 rounded-full hover:bg-destructive/20 transition-colors">
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="text-xs font-bold">{t('Logout', 'लॉगआउट')}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {user.email === 'weareallforyou12345@gmail.com' && (
+              <button onClick={() => navigate('/admin')} className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span className="text-xs font-bold">Admin</span>
+              </button>
+            )}
+            <button onClick={handleLogout} className="flex items-center gap-1.5 bg-destructive/10 text-destructive px-3 py-1.5 rounded-full hover:bg-destructive/20 transition-colors">
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="text-xs font-bold">{t('Logout', 'लॉगआउट')}</span>
+            </button>
+          </div>
         ) : (
           <button onClick={() => navigate('/auth')} className="flex items-center gap-1.5 gradient-primary text-primary-foreground px-3 py-1.5 rounded-full shadow-warm">
             <LogIn className="w-3.5 h-3.5" />
