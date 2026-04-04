@@ -8,21 +8,22 @@ import { Users, Activity, TrendingUp, User, ArrowLeft } from 'lucide-react';
 const ADMIN_EMAIL = 'weareallforyou12345@gmail.com';
 
 interface UserProfile {
-  user_id: string;
-  display_name: string | null;
-  class_grade: number | null;
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: string | null;
   created_at: string;
 }
 
 interface UserProgress {
   user_id: string;
-  xp: number;
-  level: number;
-  streak: number;
-  total_problems: number;
-  accuracy: number;
-  joined_at: string;
-  last_active_at: string;
+  total_xp: number;
+  current_level: number;
+  daily_streak: number;
+  last_activity_date: string;
+  grade_level: number | null;
+  achievements: string[] | null;
+  created_at: string;
 }
 
 interface ActivityCount {
@@ -38,14 +39,13 @@ interface UserActivitySummary {
 interface AdminUser {
   user_id: string;
   name: string;
-  class_grade: number | null;
+  email: string | null;
+  grade_level: number | null;
   joined_at: string;
   last_active_at: string;
   xp: number;
   level: number;
   streak: number;
-  total_problems: number;
-  accuracy: number;
   activity: UserActivitySummary;
 }
 
@@ -93,8 +93,8 @@ const AdminPage = () => {
 
   const fetchAllData = async () => {
     const [profilesRes, progressRes, activityRes] = await Promise.all([
-      supabase.from('profiles').select('user_id, display_name, class_grade, created_at'),
-      supabase.from('student_progress').select('user_id, xp, level, streak, total_problems, accuracy, joined_at, last_active_at'),
+      supabase.from('profiles').select('id, full_name, email, role, created_at'),
+      supabase.from('student_profiles').select('user_id, total_xp, current_level, daily_streak, last_activity_date, grade_level, achievements, created_at'),
       supabase.from('user_activity_log').select('user_id, activity_type, activity_value'),
     ]);
 
@@ -114,21 +114,20 @@ const AdminPage = () => {
       else activityMap[row.user_id][key].push({ value: row.activity_value, count: 1 });
     }
 
-    // Join profiles + progress
+    // Join profiles + progress (profiles.id = student_profiles.user_id)
     const combined: AdminUser[] = profiles.map(p => {
-      const prog = progress.find(x => x.user_id === p.user_id);
+      const prog = progress.find(x => x.user_id === p.id);
       return {
-        user_id: p.user_id,
-        name: p.display_name || 'Unknown',
-        class_grade: p.class_grade,
-        joined_at: prog?.joined_at || p.created_at,
-        last_active_at: prog?.last_active_at || p.created_at,
-        xp: prog?.xp || 0,
-        level: prog?.level || 1,
-        streak: prog?.streak || 0,
-        total_problems: prog?.total_problems || 0,
-        accuracy: prog?.accuracy || 0,
-        activity: activityMap[p.user_id] || { page_visits: [], practice_categories: [] },
+        user_id: p.id,
+        name: p.full_name || 'Unknown',
+        email: p.email,
+        grade_level: prog?.grade_level || null,
+        joined_at: prog?.created_at || p.created_at,
+        last_active_at: prog?.last_activity_date || p.created_at,
+        xp: prog?.total_xp || 0,
+        level: prog?.current_level || 1,
+        streak: prog?.daily_streak || 0,
+        activity: activityMap[p.id] || { page_visits: [], practice_categories: [] },
       };
     });
 
@@ -201,7 +200,7 @@ const AdminPage = () => {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm truncate">{user.name}</p>
                     <p className="text-xs text-muted-foreground">Level {user.level} • {user.xp} XP</p>
-                    {user.class_grade && <p className="text-xs text-muted-foreground">Class {user.class_grade}</p>}
+                    {user.email && <p className="text-xs text-muted-foreground truncate">{user.email}</p>}
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-border flex justify-between text-xs text-muted-foreground">
@@ -239,11 +238,11 @@ const AdminPage = () => {
                 <div className="bg-muted rounded-xl p-4 space-y-2">
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-3">Stats</p>
                   {[
+                    ['Email', selectedUser.email || 'N/A'],
                     ['Joined', formatDate(selectedUser.joined_at)],
                     ['Last Active', timeAgo(selectedUser.last_active_at)],
-                    ['Problems Solved', selectedUser.total_problems.toString()],
-                    ['Accuracy', `${selectedUser.accuracy}%`],
-                    ['Class Grade', selectedUser.class_grade ? `Class ${selectedUser.class_grade}` : 'N/A'],
+                    ['Streak', `🔥 ${selectedUser.streak} days`],
+                    ['Grade Level', selectedUser.grade_level ? `Grade ${selectedUser.grade_level}` : 'N/A'],
                   ].map(([label, value]) => (
                     <div key={label} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{label}</span>

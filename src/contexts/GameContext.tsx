@@ -65,7 +65,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Load progress from DB
   const loadProgress = async (uid: string) => {
     const { data } = await supabase
-      .from('student_progress')
+      .from('student_profiles')
       .select('*')
       .eq('user_id', uid)
       .single();
@@ -73,16 +73,13 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data) {
       setStudent(prev => ({
         ...prev,
-        level: data.level,
-        xp: data.xp,
-        xpToNext: data.xp_to_next,
-        streak: data.streak,
-        totalProblems: data.total_problems,
-        accuracy: data.accuracy,
-        badges: data.badges || [],
-        classGrade: data.class_grade,
-        joinedAt: data.joined_at,
-        lastActiveAt: data.last_active_at,
+        level: data.current_level ?? prev.level,
+        xp: data.total_xp ?? prev.xp,
+        streak: data.daily_streak ?? prev.streak,
+        badges: data.achievements || [],
+        classGrade: data.grade_level ?? prev.classGrade,
+        joinedAt: data.created_at ?? prev.joinedAt,
+        lastActiveAt: data.last_activity_date ?? prev.lastActiveAt,
       }));
     }
   };
@@ -93,17 +90,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
       await supabase
-        .from('student_progress')
+        .from('student_profiles')
         .update({
-          level: data.level,
-          xp: data.xp,
-          xp_to_next: data.xpToNext,
-          streak: data.streak,
-          total_problems: data.totalProblems,
-          accuracy: data.accuracy,
-          badges: data.badges,
-          class_grade: data.classGrade,
-          last_active_at: new Date().toISOString(),
+          current_level: data.level,
+          total_xp: data.xp,
+          daily_streak: data.streak,
+          achievements: data.badges,
+          grade_level: data.classGrade,
+          last_activity_date: new Date().toISOString().split('T')[0],
         })
         .eq('user_id', userId);
     }, 1000);
