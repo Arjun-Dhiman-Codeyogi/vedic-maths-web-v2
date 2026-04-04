@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { motion } from 'framer-motion';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { Users, Activity, TrendingUp, ArrowLeft, Search, X, Zap, Flame, Star, BookOpen, Trophy, AlertCircle } from 'lucide-react';
+import { Users, Activity, TrendingUp, ArrowLeft, Search, X, Zap, Flame, Star, BookOpen, Trophy, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { fetchPracticeHistory, type PracticeHistory } from '@/lib/fetchHistory';
 
 const ADMIN_EMAIL = 'weareallforyou12345@gmail.com';
 
@@ -87,6 +88,7 @@ const AdminPage = () => {
   const [weeklyData, setWeeklyData] = useState<WeeklyDay[]>([]);
   const [dailyUserSet, setDailyUserSet] = useState<Record<string, Set<string>>>({});
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [selectedHistory, setSelectedHistory] = useState<PracticeHistory | null>(null);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -421,7 +423,7 @@ const AdminPage = () => {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
-                onClick={() => setSelectedUser(user)}
+                onClick={() => { setSelectedUser(user); setSelectedHistory(null); fetchPracticeHistory(user.user_id).then(setSelectedHistory); }}
                 className="bg-card rounded-2xl p-4 border border-border shadow-card hover:shadow-elevated hover:border-primary/30 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-start gap-3">
@@ -470,7 +472,7 @@ const AdminPage = () => {
       </div>
 
       {/* Detail Sheet */}
-      <Sheet open={!!selectedUser} onOpenChange={open => !open && setSelectedUser(null)}>
+      <Sheet open={!!selectedUser} onOpenChange={open => { if (!open) { setSelectedUser(null); setSelectedHistory(null); } }}>
         <SheetContent className="overflow-y-auto border-border w-full sm:max-w-md p-4 sm:p-6">
           {selectedUser && (
             <>
@@ -593,6 +595,78 @@ const AdminPage = () => {
                           );
                         })}
                     </div>
+                  )}
+                </div>
+
+                {/* Practice History */}
+                <div className="bg-card rounded-xl p-4 border border-border shadow-card">
+                  <p className="font-display font-bold text-xs text-muted-foreground uppercase tracking-wide mb-3">Practice History</p>
+                  {!selectedHistory ? (
+                    <div className="flex items-center justify-center py-4">
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : selectedHistory.total === 0 ? (
+                    <p className="text-xs text-muted-foreground">No questions attempted yet</p>
+                  ) : (
+                    <>
+                      {/* Summary */}
+                      <div className="grid grid-cols-3 gap-2 mb-4">
+                        {[
+                          { icon: BookOpen, label: 'Total', value: selectedHistory.total, color: 'text-primary', bg: 'bg-primary/10' },
+                          { icon: CheckCircle, label: 'Correct', value: selectedHistory.totalCorrect, color: 'text-level', bg: 'bg-level/10' },
+                          { icon: XCircle, label: 'Wrong', value: selectedHistory.totalWrong, color: 'text-destructive', bg: 'bg-destructive/10' },
+                        ].map(s => (
+                          <div key={s.label} className={`${s.bg} rounded-xl p-2.5 text-center`}>
+                            <s.icon className={`w-3.5 h-3.5 mx-auto mb-1 ${s.color}`} />
+                            <p className={`font-display font-bold text-base ${s.color}`}>{s.value}</p>
+                            <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Accuracy */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-xs mb-1.5">
+                          <span className="font-medium">Overall Accuracy</span>
+                          <span className="font-bold text-primary">{selectedHistory.accuracy}%</span>
+                        </div>
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${selectedHistory.accuracy}%` }}
+                            transition={{ duration: 0.6 }}
+                            className="h-full gradient-primary rounded-full"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Per category */}
+                      {selectedHistory.categoryStats.length > 0 && (
+                        <div className="space-y-3">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">By Category</p>
+                          {selectedHistory.categoryStats.map(cat => (
+                            <div key={cat.category}>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span className="font-semibold">{cat.label}</span>
+                                <span className="text-muted-foreground">{cat.correct}/{cat.total} • <span className="text-primary font-bold">{cat.accuracy}%</span></span>
+                              </div>
+                              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${cat.accuracy}%` }}
+                                  transition={{ duration: 0.6 }}
+                                  className="h-full gradient-primary rounded-full"
+                                />
+                              </div>
+                              <div className="flex gap-3 mt-1">
+                                <span className="text-[10px] text-level">✓ {cat.correct} correct</span>
+                                <span className="text-[10px] text-destructive">✗ {cat.wrong} wrong</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

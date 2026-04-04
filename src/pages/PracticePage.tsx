@@ -367,6 +367,8 @@ const PracticePage = () => {
     setTotalAnswered(p => p + 1);
     updateAccuracy(isCorrect);
 
+    if (userId) logActivity(userId, 'question_result', `${isCorrect ? 'correct' : 'wrong'}:${category}`);
+
     if (isCorrect) {
       const points = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 20 : 35;
       setScore(s => s + points + streak * 2);

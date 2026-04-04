@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type ActivityType = 'page_visit' | 'practice_category';
+export type ActivityType = 'page_visit' | 'practice_category' | 'question_result';
 
 export async function logActivity(
   userId: string,
