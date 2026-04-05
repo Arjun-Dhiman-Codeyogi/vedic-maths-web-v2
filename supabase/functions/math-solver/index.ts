@@ -77,26 +77,32 @@ Deno.serve(async (req) => {
       ];
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
-        }),
+    const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+    let content = "";
+
+    for (const model of MODELS) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (content) break;
+      } else {
+        const errText = await response.text();
+        console.error(`${model} error ${response.status}: ${errText}`);
+        if (response.status !== 429) throw new Error(`Gemini error ${response.status}`);
       }
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error(`Gemini error ${response.status}: ${errText}`);
-      throw new Error(`Gemini error ${response.status}`);
     }
-
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!content) {
       return new Response(JSON.stringify({ error: "Empty response from AI" }), {

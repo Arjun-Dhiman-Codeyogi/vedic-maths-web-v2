@@ -32,28 +32,35 @@ Deno.serve(async (req) => {
         : msg.content }],
     }));
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-        }),
-      }
-    );
+    const MODELS = ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-flash-8b"];
+    let content = "";
 
-    if (!response.ok) {
-      const err = await response.text();
-      console.error(`Gemini error ${response.status}: ${err}`);
-      throw new Error(`Gemini error ${response.status}`);
+    for (const model of MODELS) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents,
+            generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        content = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        if (content) break;
+      } else {
+        const err = await response.text();
+        console.error(`${model} error ${response.status}: ${err}`);
+        if (response.status !== 429) throw new Error(`Gemini error ${response.status}`);
+        // 429 → try next model
+      }
     }
 
-    const data = await response.json();
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!content) throw new Error("Empty response from Gemini");
+    if (!content) throw new Error("All Gemini models rate-limited");
 
     return new Response(JSON.stringify({ content }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
