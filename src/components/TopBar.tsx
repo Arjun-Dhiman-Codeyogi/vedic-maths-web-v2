@@ -22,10 +22,10 @@ const TopBar = () => {
 
   return (
     <header className="sticky top-0 z-40 bg-card/90 backdrop-blur-xl border-b border-border">
-      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-14">
+      <div className="max-w-7xl mx-auto flex items-center justify-between px-4 h-[70px]">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <img src="/brand_logo.png" alt="Logo" className="h-9 w-auto object-contain" />
+          <img src="/brand_logo.png" alt="Logo" className="h-[44px] w-auto object-contain" />
         </Link>
 
         {/* Desktop Nav */}

@@ -214,7 +214,10 @@ const SolverPage = () => {
         body: JSON.stringify({ messages: newMessages }),
       });
 
-      if (!resp.ok || !resp.body) throw new Error('Stream failed');
+      if (!resp.ok || !resp.body) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData?.error || `Server error ${resp.status}`);
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
@@ -250,8 +253,8 @@ const SolverPage = () => {
           } catch { /* partial JSON, skip */ }
         }
       }
-    } catch (err) {
-      setChatMessages(prev => [...prev, { role: 'assistant', content: `❌ ${err instanceof Error ? err.message : 'Something went wrong'}` }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'assistant', content: `⚠️ AI is busy right now. Please try again in a moment.` }]);
     } finally {
       setChatLoading(false);
     }
