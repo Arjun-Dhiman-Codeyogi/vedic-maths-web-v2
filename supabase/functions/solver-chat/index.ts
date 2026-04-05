@@ -14,8 +14,7 @@ Rules:
 - Use examples and analogies to make things easy to understand
 - Encourage the student and be supportive
 - Focus on both traditional and Vedic Math methods
-- Keep responses concise but thorough
-- Use markdown formatting for math steps`;
+- Keep responses concise but thorough`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -25,55 +24,39 @@ Deno.serve(async (req) => {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
 
-    // Convert OpenAI-style messages to Gemini format
+    // Convert messages to Gemini format
     const contents = (messages as { role: string; content: string }[]).map((msg) => ({
       role: msg.role === "assistant" ? "model" : "user",
-      parts: [{ text: msg.content }],
+      parts: [{ text: msg.role === "user" && messages.indexOf(msg) === 0
+        ? `${SYSTEM_PROMPT}\n\n${msg.content}`
+        : msg.content }],
     }));
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
           contents,
           generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
         }),
       }
     );
 
-    if (!response.ok || !response.body) {
+    if (!response.ok) {
       const err = await response.text();
-      throw new Error(`Gemini error ${response.status}: ${err}`);
+      console.error(`Gemini error ${response.status}: ${err}`);
+      throw new Error(`Gemini error ${response.status}`);
     }
 
-    // Transform Gemini SSE → OpenAI-compatible SSE so frontend works unchanged
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        for (const line of text.split("\n")) {
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (!jsonStr) continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (content) {
-              const openAIChunk = JSON.stringify({ choices: [{ delta: { content } }] });
-              controller.enqueue(new TextEncoder().encode(`data: ${openAIChunk}\n\n`));
-            }
-          } catch { /* skip partial */ }
-        }
-      },
-      flush(controller) {
-        controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
-      },
-    });
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    return new Response(response.body.pipeThrough(transformStream), {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
+    if (!content) throw new Error("Empty response from Gemini");
+
+    return new Response(JSON.stringify({ content }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (e) {
