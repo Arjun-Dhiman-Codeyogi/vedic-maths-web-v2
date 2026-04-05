@@ -232,7 +232,7 @@ const AbacusPage = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="px-3 py-4 md:py-8 space-y-4 max-w-2xl mx-auto">
+    <div className="px-3 py-4 md:py-6 space-y-4 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -277,24 +277,19 @@ const AbacusPage = () => {
         </AnimatePresence>
       </motion.div>
 
-      {/* Abacus Frame */}
+      {/* Abacus Frame — horizontally scrollable on tiny screens */}
       <div
         className="rounded-2xl overflow-hidden shadow-elevated border-2 border-amber-700/40"
         style={{ background: 'linear-gradient(135deg, #92400e 0%, #b45309 40%, #92400e 100%)' }}
       >
-        {/* Top frame strip */}
         <div className="h-3 bg-amber-900/60" />
-
-        {/* Rods area */}
-        <div className="bg-amber-50/95 dark:bg-amber-950/80 mx-2 rounded-sm px-2 py-1">
-          <div className="flex">
+        <div className="bg-amber-50/95 dark:bg-amber-950/80 mx-2 rounded-sm overflow-x-auto">
+          <div className="flex px-1 py-1" style={{ minWidth: 280 }}>
             {abacus.map((rod, i) => (
               <AbacusRod key={i} rod={rod} rodIdx={i} onChange={r => updateRod(i, r)} />
             ))}
           </div>
         </div>
-
-        {/* Bottom frame strip */}
         <div className="h-3 bg-amber-900/60" />
       </div>
 
@@ -335,7 +330,7 @@ const AbacusPage = () => {
             </div>
 
             {/* Level selector */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {DRILL_LEVELS.map((lv, i) => (
                 <button
                   key={lv.id}

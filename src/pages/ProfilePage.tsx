@@ -61,42 +61,44 @@ const ProfilePage = () => {
     <div className="px-4 py-4 md:py-8 space-y-5 max-w-7xl mx-auto">
       {/* Quick Settings Bar */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between bg-card rounded-xl p-3 shadow-card border border-border"
+        className="flex flex-wrap items-center justify-between gap-2 bg-card rounded-xl p-3 shadow-card border border-border"
       >
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-muted px-2.5 py-1.5 rounded-full">
-            <Flame className="w-4 h-4 text-streak animate-fire-flicker" />
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1 bg-muted px-2 py-1.5 rounded-full">
+            <Flame className="w-3.5 h-3.5 text-streak animate-fire-flicker" />
             <span className="text-xs font-bold">{student.streak}</span>
           </div>
-          <div className="flex items-center gap-1 bg-muted px-2.5 py-1.5 rounded-full">
+          <div className="flex items-center gap-1 bg-muted px-2 py-1.5 rounded-full">
             <span className="text-xs">⚡</span>
             <span className="text-xs font-bold">{student.xp} XP</span>
           </div>
-          <button onClick={toggleLang} className="flex items-center gap-1 bg-muted px-2.5 py-1.5 rounded-full hover:bg-accent/20 transition-colors">
-            <Globe className="w-3.5 h-3.5 text-muted-foreground" />
+          <button onClick={toggleLang} className="flex items-center gap-1 bg-muted px-2 py-1.5 rounded-full hover:bg-accent/20 transition-colors">
+            <Globe className="w-3 h-3 text-muted-foreground" />
             <span className="text-xs font-bold">{lang === 'en' ? 'हि' : 'EN'}</span>
           </button>
         </div>
 
-        {user ? (
-          <div className="flex items-center gap-2">
-            {user.email === 'weareallforyou12345@gmail.com' && (
-              <button onClick={() => navigate('/admin')} className="flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1.5 rounded-full hover:bg-primary/20 transition-colors">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span className="text-xs font-bold">Admin</span>
+        <div className="flex items-center gap-1.5">
+          {user ? (
+            <>
+              {user.email === 'weareallforyou12345@gmail.com' && (
+                <button onClick={() => navigate('/admin')} className="flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-1.5 rounded-full hover:bg-primary/20 transition-colors">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span className="text-xs font-bold">Admin</span>
+                </button>
+              )}
+              <button onClick={handleLogout} className="flex items-center gap-1 bg-destructive/10 text-destructive px-2.5 py-1.5 rounded-full hover:bg-destructive/20 transition-colors">
+                <LogOut className="w-3 h-3" />
+                <span className="text-xs font-bold">{t('Logout', 'लॉगआउट')}</span>
               </button>
-            )}
-            <button onClick={handleLogout} className="flex items-center gap-1.5 bg-destructive/10 text-destructive px-3 py-1.5 rounded-full hover:bg-destructive/20 transition-colors">
-              <LogOut className="w-3.5 h-3.5" />
-              <span className="text-xs font-bold">{t('Logout', 'लॉगआउट')}</span>
+            </>
+          ) : (
+            <button onClick={() => navigate('/auth')} className="flex items-center gap-1 gradient-primary text-primary-foreground px-2.5 py-1.5 rounded-full shadow-warm">
+              <LogIn className="w-3 h-3" />
+              <span className="text-xs font-bold">{t('Login', 'लॉगिन')}</span>
             </button>
-          </div>
-        ) : (
-          <button onClick={() => navigate('/auth')} className="flex items-center gap-1.5 gradient-primary text-primary-foreground px-3 py-1.5 rounded-full shadow-warm">
-            <LogIn className="w-3.5 h-3.5" />
-            <span className="text-xs font-bold">{t('Login', 'लॉगिन')}</span>
-          </button>
-        )}
+          )}
+        </div>
       </motion.div>
 
       {/* Profile Header */}
@@ -121,7 +123,7 @@ const ProfilePage = () => {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {[
           { icon: Target, label: t('Accuracy', 'सटीकता'), value: `${student.accuracy}%`, color: 'text-level' },
           { icon: Brain, label: t('Problems', 'सवाल'), value: student.totalProblems.toString(), color: 'text-secondary' },

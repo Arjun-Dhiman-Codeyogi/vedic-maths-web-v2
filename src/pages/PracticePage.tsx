@@ -448,12 +448,12 @@ const PracticePage = () => {
         {/* Operation Select */}
         <div>
           <h3 className="font-display font-bold text-sm mb-2">{t('Operation', 'संक्रिया')}</h3>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
             {categoryOps[category].ops.map(op => (
               <button key={op} onClick={() => { setOperation(op); setProblem(generateProblem(difficulty, op)); }}
-                className={`py-2.5 rounded-xl font-display font-bold text-xs transition-all ${operation === op ? 'gradient-primary text-primary-foreground shadow-warm' : 'bg-card border border-border text-foreground'}`}
+                className={`flex-shrink-0 px-3 py-2.5 rounded-xl font-display font-bold text-xs transition-all ${operation === op ? 'gradient-primary text-primary-foreground shadow-warm' : 'bg-card border border-border text-foreground'}`}
               >
-                <div className="text-[10px] font-semibold opacity-90">{t(categoryOps[category].labels[op].en, categoryOps[category].labels[op].hi)}</div>
+                {t(categoryOps[category].labels[op].en, categoryOps[category].labels[op].hi)}
               </button>
             ))}
           </div>

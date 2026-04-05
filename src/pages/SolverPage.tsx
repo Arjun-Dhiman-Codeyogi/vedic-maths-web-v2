@@ -229,7 +229,7 @@ const SolverPage = () => {
   };
 
   return (
-    <div className="px-4 py-4 md:py-8 space-y-5 max-w-7xl mx-auto">
+    <div className="px-3 sm:px-4 py-4 md:py-6 space-y-4 max-w-2xl mx-auto">
       <div>
         <h2 className="font-display font-bold text-xl">{t('AI Photo Solver', 'AI फोटो सॉल्वर')}</h2>
         <p className="text-sm text-muted-foreground">{t('Upload a math problem & get dual solutions', 'गणित का सवाल अपलोड करें और दो तरीके से हल पाएं')}</p>
@@ -374,7 +374,7 @@ const SolverPage = () => {
           </div>
 
           {/* Explanation in selected language */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="bg-muted/50 rounded-xl p-3 border border-border">
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">{solutionLang === 'en' ? 'Traditional Explanation' : 'पारंपरिक व्याख्या'}</p>
               <p className="text-xs text-foreground leading-relaxed">{solutionLang === 'en' ? solution.traditional.explanation_en : solution.traditional.explanation_hi}</p>
@@ -386,7 +386,7 @@ const SolverPage = () => {
           </div>
 
           {/* Dual Solutions Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Traditional */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border">
               <div className="flex items-center gap-2 mb-3">

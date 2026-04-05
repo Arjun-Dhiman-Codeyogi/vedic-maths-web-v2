@@ -7,11 +7,11 @@ const Footer = () => {
 
   return (
     <footer className="bg-card border-t border-border mt-8">
-      <div className="max-w-7xl mx-auto px-4 py-10">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Top section */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
               <img src="/brand_logo.png" alt="Logo" className="h-[62px] w-auto object-contain" />
             </div>
