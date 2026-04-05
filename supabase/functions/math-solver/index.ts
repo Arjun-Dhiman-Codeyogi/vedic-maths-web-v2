@@ -77,7 +77,11 @@ Deno.serve(async (req) => {
       ];
     }
 
-    const MODELS = ["gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-1.5-pro"];
+    const MODELS = [
+      "gemini-2.0-flash-lite",
+      "gemini-1.5-flash",
+      "gemini-1.5-flash-8b",
+    ];
     let content = "";
 
     for (const model of MODELS) {
