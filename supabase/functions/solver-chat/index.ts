@@ -3,28 +3,10 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+    "authorization, x-client-info, apikey, content-type",
 };
 
-// Different providers for redundancy
-const CHAT_MODELS = [
-  "meta-llama/llama-3.3-70b-instruct:free",   // Venice
-  "google/gemma-3-27b-it:free",                // Google AI Studio
-  "nvidia/nemotron-3-nano-30b-a3b:free",       // Nvidia
-];
-
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  try {
-    const { messages, problemContext } = await req.json();
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY is not configured");
-
-    const systemPrompt = `You are a friendly and expert Vedic Math teacher who helps students understand math concepts.
-
-Context about the current problem being discussed:
-${problemContext || "No specific problem context provided."}
+const SYSTEM_PROMPT = `You are a friendly and expert Vedic Math teacher who helps students understand math concepts.
 
 Rules:
 - Explain things clearly in simple language
@@ -35,55 +17,70 @@ Rules:
 - Keep responses concise but thorough
 - Use markdown formatting for math steps`;
 
-    // Embed system prompt in the first user message (works with all models including Gemma)
-    const [firstMsg, ...restMsgs] = messages as { role: string; content: string }[];
-    const augmentedMessages = [
-      { role: firstMsg.role, content: `${systemPrompt}\n\n${firstMsg.content}` },
-      ...restMsgs,
-    ];
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-    // Try models in order, fallback on error
-    for (let i = 0; i < CHAT_MODELS.length; i++) {
-      const model = CHAT_MODELS[i];
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  try {
+    const { messages } = await req.json();
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+
+    // Convert OpenAI-style messages to Gemini format
+    const contents = (messages as { role: string; content: string }[]).map((msg) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    }));
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${GEMINI_API_KEY}`,
+      {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-          "HTTP-Referer": "https://vedic-math-app.vercel.app",
-          "X-Title": "Vedic Math App",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model,
-          messages: augmentedMessages,
-          stream: true,
-          temperature: 0.7,
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents,
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
         }),
-      });
-
-      if (response.ok && response.body) {
-        // OpenRouter returns OpenAI-compatible SSE format — pipe directly
-        return new Response(response.body, {
-          headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-        });
       }
+    );
 
-      const errText = await response.text();
-      console.error(`${model} stream error ${response.status}: ${errText}`);
-
-      if (i < CHAT_MODELS.length - 1) {
-        await new Promise((r) => setTimeout(r, 1000));
-      }
+    if (!response.ok || !response.body) {
+      const err = await response.text();
+      throw new Error(`Gemini error ${response.status}: ${err}`);
     }
 
-    return new Response(JSON.stringify({ error: "AI service error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Transform Gemini SSE → OpenAI-compatible SSE so frontend works unchanged
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        for (const line of text.split("\n")) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (content) {
+              const openAIChunk = JSON.stringify({ choices: [{ delta: { content } }] });
+              controller.enqueue(new TextEncoder().encode(`data: ${openAIChunk}\n\n`));
+            }
+          } catch { /* skip partial */ }
+        }
+      },
+      flush(controller) {
+        controller.enqueue(new TextEncoder().encode("data: [DONE]\n\n"));
+      },
+    });
+
+    return new Response(response.body.pipeThrough(transformStream), {
+      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 
   } catch (e) {
     console.error("solver-chat error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });

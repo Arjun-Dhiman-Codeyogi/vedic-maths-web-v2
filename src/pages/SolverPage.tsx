@@ -158,6 +158,7 @@ const SolverPage = () => {
 
       if (res.status === 429) throw new Error('rate_limit');
       if (!res.ok) throw new Error(data?.error ?? `Server error ${res.status}`);
+      if (data?.error === 'no_question') throw new Error('no_question');
       if (data?.error) throw new Error(data.error);
 
       setSolution(data as SolutionData);
@@ -334,16 +335,33 @@ const SolverPage = () => {
       {/* Error */}
       {error && (
         <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4 text-center space-y-2">
-          <p className="text-sm text-destructive font-medium">
-            {error === 'rate_limit'
-              ? t('Please wait a moment and try again.', 'थोड़ा रुको और दोबारा कोशिश करो।')
-              : t('Something went wrong. Please try again.', 'कुछ गलत हुआ। दोबारा कोशिश करो।')}
-          </p>
-          <button
-            onClick={() => { setError(''); capturedImage ? solveProblem(capturedImage, null) : solveProblem(null, textInput); }}
-            className="mt-2 px-4 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg"
-          >
-            {t('Try Again →', 'दोबारा कोशिश करें →')}
+          {error === 'no_question' ? (
+            <>
+              <p className="text-2xl">🔍</p>
+              <p className="text-sm font-semibold text-foreground">
+                {t('No math question found!', 'कोई गणित का सवाल नहीं मिला!')}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {t('Please upload an image that contains a math problem, or type a problem below.', 'कृपया ऐसी फोटो डालें जिसमें गणित का सवाल हो, या नीचे सवाल टाइप करें।')}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-destructive font-medium">
+                {error === 'rate_limit'
+                  ? t('Please wait a moment and try again.', 'थोड़ा रुको और दोबारा कोशिश करो।')
+                  : t('Something went wrong. Please try again.', 'कुछ गलत हुआ। दोबारा कोशिश करो।')}
+              </p>
+              <button
+                onClick={() => { setError(''); capturedImage ? solveProblem(capturedImage, null) : solveProblem(null, textInput); }}
+                className="mt-2 px-4 py-1.5 text-sm font-semibold bg-primary text-primary-foreground rounded-lg"
+              >
+                {t('Try Again →', 'दोबारा कोशिश करें →')}
+              </button>
+            </>
+          )}
+          <button onClick={() => { setError(''); setCapturedImage(null); }} className="block mx-auto text-xs text-muted-foreground underline">
+            {t('Dismiss', 'बंद करें')}
           </button>
         </div>
       )}

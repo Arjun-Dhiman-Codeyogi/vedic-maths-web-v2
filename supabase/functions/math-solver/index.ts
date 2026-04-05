@@ -8,7 +8,12 @@ const corsHeaders = {
 
 const SYSTEM_PROMPT = `You are an expert math teacher who specializes in both traditional school methods and Vedic Mathematics.
 
-When given a math problem (either as an image or text):
+IMPORTANT: First check if the input contains a math problem (equation, calculation, word problem, or numbers to compute).
+
+If NO math problem is found, respond ONLY with this exact JSON:
+{"error": "no_question"}
+
+If a math problem IS found:
 1. Identify the math problem clearly.
 2. Solve using the TRADITIONAL school method step by step.
 3. Solve using a VEDIC MATH shortcut/sutra step by step. Name the Vedic sutra.
@@ -32,65 +37,15 @@ Respond ONLY in this exact JSON format — no markdown, no code blocks:
   },
   "speedup": "3.75x",
   "difficulty": "Easy"
-}
-If no math problem found: {"error": "No math problem found"}`;
-
-// Text-only models (different providers for redundancy)
-const TEXT_MODELS = [
-  "meta-llama/llama-3.3-70b-instruct:free",   // Venice
-  "google/gemma-3-27b-it:free",                // Google AI Studio
-  "nvidia/nemotron-3-nano-30b-a3b:free",       // Nvidia
-];
-
-// Vision models for image problems (different providers)
-const VISION_MODELS = [
-  "mistralai/mistral-small-3.1-24b-instruct:free", // Venice
-  "google/gemma-3-27b-it:free",                    // Google AI Studio
-  "nvidia/nemotron-nano-12b-v2-vl:free",           // Nvidia
-];
-
-async function callOpenRouter(
-  apiKey: string,
-  messages: unknown[],
-  models: string[],
-): Promise<{ ok: boolean; data: unknown }> {
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://vedic-math-app.vercel.app",
-        "X-Title": "Vedic Math App",
-      },
-      body: JSON.stringify({ model, messages }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      return { ok: true, data };
-    }
-
-    const errText = await res.text();
-    console.error(`${model} error ${res.status}: ${errText}`);
-
-    // Wait before trying next model on rate limit
-    if (res.status === 429 && i < models.length - 1) {
-      await new Promise((r) => setTimeout(r, 1500));
-    }
-  }
-
-  return { ok: false, data: { error: "quota_exceeded" } };
-}
+}`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const { imageBase64, textProblem } = await req.json();
-    const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-    if (!OPENROUTER_API_KEY) throw new Error("OPENROUTER_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     if (!imageBase64 && !textProblem) {
       return new Response(JSON.stringify({ error: "No input provided" }), {
@@ -98,40 +53,51 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Build messages — embed system prompt in user message (works with all models)
-    let messages: unknown[];
-    let models: string[];
+    // Build Gemini request body
+    let parts: unknown[];
 
     if (imageBase64) {
-      const imageUrl = imageBase64.startsWith("data:") ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
-      messages = [{
-        role: "user",
-        content: [
-          { type: "image_url", image_url: { url: imageUrl } },
-          { type: "text", text: `${SYSTEM_PROMPT}\n\nSolve the math problem in this image. Return JSON only.` },
-        ],
-      }];
-      models = VISION_MODELS;
+      // Strip the data URL prefix to get raw base64
+      const base64Data = imageBase64.startsWith("data:")
+        ? imageBase64.split(",")[1]
+        : imageBase64;
+
+      parts = [
+        {
+          inline_data: {
+            mime_type: "image/jpeg",
+            data: base64Data,
+          },
+        },
+        { text: `${SYSTEM_PROMPT}\n\nLook at this image. If you see a math problem, solve it and return JSON. If no math problem, return {"error": "no_question"}.` },
+      ];
     } else {
-      messages = [{
-        role: "user",
-        content: `${SYSTEM_PROMPT}\n\nSolve: ${textProblem}. Return JSON only.`,
-      }];
-      models = TEXT_MODELS;
+      parts = [
+        { text: `${SYSTEM_PROMPT}\n\nSolve: ${textProblem}. Return JSON only.` },
+      ];
     }
 
-    const { ok, data } = await callOpenRouter(OPENROUTER_API_KEY, messages, models);
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts }],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+        }),
+      }
+    );
 
-    if (!ok) {
-      return new Response(
-        JSON.stringify({ error: "quota_exceeded" }),
-        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    if (!response.ok) {
+      const errText = await response.text();
+      console.error(`Gemini error ${response.status}: ${errText}`);
+      throw new Error(`Gemini error ${response.status}`);
     }
 
-    // Extract text from OpenRouter response (OpenAI-compatible format)
-    const openRouterData = data as { choices?: { message?: { content?: string } }[] };
-    const content = openRouterData.choices?.[0]?.message?.content;
+    const data = await response.json();
+    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
     if (!content) {
       return new Response(JSON.stringify({ error: "Empty response from AI" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -151,8 +117,9 @@ Deno.serve(async (req) => {
 
   } catch (e) {
     console.error("math-solver error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 });
