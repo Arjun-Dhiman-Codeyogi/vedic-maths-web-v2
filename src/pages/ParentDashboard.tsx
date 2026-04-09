@@ -230,10 +230,6 @@ const ParentDashboard = () => {
         <div className="max-w-2xl mx-auto h-full flex items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
             <img src="/brand_logo.png" alt="Logo" className="h-[44px] w-auto object-contain" />
-            <div>
-              <h1 className="font-display font-bold text-sm text-foreground leading-tight">Parent Dashboard</h1>
-              <p className="text-[11px] text-muted-foreground">Monitor your child's progress</p>
-            </div>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle size="sm" />
@@ -248,6 +244,21 @@ const ParentDashboard = () => {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-5 space-y-5">
+
+        {/* Header Card */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-3 bg-card rounded-2xl px-4 py-3 border-2 border-border shadow-card"
+        >
+          <div className="w-9 h-9 gradient-primary rounded-xl flex items-center justify-center flex-shrink-0">
+            <Users className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-sm text-foreground leading-tight">Parent Dashboard</h2>
+            <p className="text-[11px] text-muted-foreground">Monitor your child's progress</p>
+          </div>
+        </motion.div>
 
         {/* No children state */}
         {children.length === 0 && !loading && (
@@ -301,7 +312,7 @@ const ParentDashboard = () => {
                     </div>
                     <div className="text-left">
                       <p className="font-display font-bold text-sm leading-tight">{child.name}</p>
-                      <p className={`text-[11px] ${selectedChildId === child.student_id ? 'text-white/70' : 'text-muted-foreground'}`}>
+                      <p className={`text-[11px] ${selectedChildId === child.student_id ? 'text-white/70' : 'text-muted-foreground dark:text-foreground'}`}>
                         {child.grade_level ? `Class ${child.grade_level}` : 'Student'} · Lvl {child.level}
                       </p>
                     </div>
