@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useGame } from '@/contexts/GameContext';
 import { supabase } from '@/integrations/supabase/client';
-import { User as UserIcon, TrendingUp, Target, Zap, Brain, BarChart3, Globe, Flame, LogIn, LogOut, Calendar, ShieldCheck, CheckCircle, XCircle, BookOpen } from 'lucide-react';
+import { User as UserIcon, TrendingUp, Target, Zap, Brain, BarChart3, Globe, Flame, LogIn, LogOut, Calendar, ShieldCheck, CheckCircle, XCircle, BookOpen, KeyRound, RefreshCw, Copy, Check, X } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { fetchPracticeHistory, type PracticeHistory } from '@/lib/fetchHistory';
 
@@ -16,6 +16,11 @@ const ProfilePage = () => {
   const xpPercent = Math.round((student.xp / student.xpToNext) * 100);
   const [user, setUser] = useState<User | null>(null);
   const [history, setHistory] = useState<PracticeHistory | null>(null);
+  const [parentCode, setParentCode] = useState<string | null>(null);
+  const [codeSecondsLeft, setCodeSecondsLeft] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const [showCodePopup, setShowCodePopup] = useState(false);
+  const codeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -30,9 +35,54 @@ const ProfilePage = () => {
   }, []);
 
   const handleLogout = async () => {
+    if (user) {
+      await supabase.from('user_activity_log').insert({ user_id: user.id, activity_type: 'logout', activity_value: new Date().toISOString() });
+    }
     await supabase.auth.signOut();
     navigate('/auth');
   };
+
+  const generateParentCode = async () => {
+    if (!user) return;
+    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000).toISOString();
+    await supabase.from('parent_invites').insert({ student_id: user.id, code, expires_at: expiresAt });
+    setParentCode(code);
+    setCodeSecondsLeft(180);
+    setShowCodePopup(true);
+    setCopied(false);
+    if (codeTimerRef.current) clearInterval(codeTimerRef.current);
+    codeTimerRef.current = setInterval(() => {
+      setCodeSecondsLeft(s => {
+        if (s <= 1) {
+          clearInterval(codeTimerRef.current!);
+          setParentCode(null);
+          setShowCodePopup(false);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+  };
+
+  const copyCode = () => {
+    if (!parentCode) return;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(parentCode);
+    } else {
+      // fallback for HTTP / non-secure contexts
+      const el = document.createElement('textarea');
+      el.value = parentCode;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand('copy');
+      document.body.removeChild(el);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const fmtCountdown = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 
   const weeklyData = [
     { day: 'Mon', problems: 25, accuracy: 80 },
@@ -61,7 +111,7 @@ const ProfilePage = () => {
     <div className="px-4 py-4 md:py-8 space-y-5 max-w-7xl mx-auto">
       {/* Quick Settings Bar */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-        className="flex flex-wrap items-center justify-between gap-2 bg-card rounded-xl p-3 shadow-card border border-border"
+        className="flex flex-wrap items-center justify-between gap-2 bg-card rounded-xl p-3 shadow-card border-2 border-border"
       >
         <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center gap-1 bg-muted px-2 py-1.5 rounded-full">
@@ -105,8 +155,8 @@ const ProfilePage = () => {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
         className="gradient-hero rounded-2xl p-5 text-primary-foreground text-center relative overflow-hidden"
       >
-        <div className="absolute -left-8 -bottom-8 w-24 h-24 rounded-full bg-white/10" />
-        <div className="w-16 h-16 gradient-warm rounded-full flex items-center justify-center mx-auto mb-2 border-4 border-white/30 shadow-lg">
+        <div className="absolute -left-8 -bottom-8 w-24 h-24 rounded-full bg-white/10 dark:bg-green-400/10" />
+        <div className="w-16 h-16 gradient-warm rounded-full flex items-center justify-center mx-auto mb-2 border-4 border-white/30 dark:border-green-400/30 shadow-lg">
           <UserIcon className="w-8 h-8 text-primary-foreground" />
         </div>
         <h2 className="font-display font-bold text-xl">{student.name}</h2>
@@ -116,8 +166,8 @@ const ProfilePage = () => {
             <span>XP</span>
             <span>{student.xp}/{student.xpToNext}</span>
           </div>
-          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-            <motion.div className="h-full bg-white/80 rounded-full" animate={{ width: `${xpPercent}%` }} />
+          <div className="h-2 bg-white/20 dark:bg-green-400/20 rounded-full overflow-hidden">
+            <motion.div className="h-full bg-white/80 dark:bg-primary/80 rounded-full" animate={{ width: `${xpPercent}%` }} />
           </div>
         </div>
       </motion.div>
@@ -130,7 +180,7 @@ const ProfilePage = () => {
           { icon: Zap, label: t('Streak', 'स्ट्रीक'), value: `${student.streak}🔥`, color: 'text-streak' },
           { icon: Calendar, label: t('Days', 'दिन'), value: `${daysCount}`, color: 'text-xp' },
         ].map(stat => (
-          <div key={stat.label} className="bg-card rounded-xl p-3 shadow-card text-center border border-border">
+          <div key={stat.label} className="bg-card rounded-xl p-3 shadow-card text-center border-2 border-border">
             <stat.icon className={`w-5 h-5 mx-auto mb-1 ${stat.color}`} />
             <p className="font-display font-bold text-lg">{stat.value}</p>
             <p className="text-[10px] text-muted-foreground font-medium">{stat.label}</p>
@@ -138,8 +188,28 @@ const ProfilePage = () => {
         ))}
       </div>
 
+      {/* Generate Parent Code */}
+      {user && (
+        <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border">
+          <div className="flex items-center gap-2 mb-3">
+            <KeyRound className="w-4 h-4 text-secondary" />
+            <h3 className="font-display font-bold text-sm">{t('Parent Access', 'पैरेंट एक्सेस')}</h3>
+          </div>
+          <div className="text-center space-y-2">
+            <p className="text-xs text-muted-foreground">{t('Generate a 6-digit code for your parent (valid 3 min)', 'अभिभावक के लिए 6-अंकी कोड बनाएं (3 मिनट वैध)')}</p>
+            <button
+              onClick={generateParentCode}
+              className="w-full py-2.5 rounded-xl gradient-warm text-primary-foreground font-display font-bold text-sm shadow-warm flex items-center justify-center gap-2"
+            >
+              <KeyRound className="w-4 h-4" />
+              {t('Generate Code', 'कोड बनाएं')}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Weekly Activity */}
-      <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+      <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border">
         <div className="flex items-center gap-2 mb-3">
           <BarChart3 className="w-4 h-4 text-primary" />
           <h3 className="font-display font-bold text-sm">{t('Weekly Activity', 'साप्ताहिक गतिविधि')}</h3>
@@ -160,7 +230,7 @@ const ProfilePage = () => {
       </div>
 
       {/* Topic Mastery */}
-      <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+      <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border">
         <h3 className="font-display font-bold text-sm mb-3">{t('Topic Mastery', 'विषय महारत')}</h3>
         <div className="space-y-3">
           {topicMastery.map(topic => (
@@ -176,7 +246,7 @@ const ProfilePage = () => {
       </div>
 
       {/* Weak Areas */}
-      <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+      <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border">
         <div className="flex items-center gap-2 mb-3">
           <TrendingUp className="w-4 h-4 text-secondary" />
           <h3 className="font-display font-bold text-sm">{t('Areas to Improve', 'सुधार के क्षेत्र')}</h3>
@@ -194,7 +264,7 @@ const ProfilePage = () => {
 
       {/* Practice History */}
       {user && (
-        <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+        <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border">
           <div className="flex items-center gap-2 mb-4">
             <BookOpen className="w-4 h-4 text-primary" />
             <h3 className="font-display font-bold text-sm">{t('Practice History', 'अभ्यास इतिहास')}</h3>
@@ -275,7 +345,7 @@ const ProfilePage = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: i * 0.08 }}
-              className="bg-card rounded-xl p-3 shadow-card border border-border flex items-center gap-2 hover:shadow-elevated hover:scale-105 hover:border-primary/30 transition-all duration-200 cursor-default"
+              className="bg-card rounded-xl p-3 shadow-card border-2 border-border flex items-center gap-2 hover:shadow-elevated hover:scale-105 hover:border-primary/30 transition-all duration-200 cursor-default"
             >
               <span className="text-2xl">{badge.split(' ')[0]}</span>
               <span className="text-xs font-semibold">{badge.split(' ').slice(1).join(' ')}</span>
@@ -283,6 +353,76 @@ const ProfilePage = () => {
           ))}
         </div>
       </div>
+      {/* Code Popup Modal */}
+      <AnimatePresence>
+        {showCodePopup && parentCode && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4"
+            onClick={e => { if (e.target === e.currentTarget) setShowCodePopup(false); }}
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 16 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 16 }}
+              className="bg-card rounded-2xl w-full max-w-sm shadow-elevated border-2 border-border overflow-hidden"
+            >
+              {/* Header */}
+              <div className="gradient-hero px-5 py-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-display font-bold text-base text-white">{t('Parent Access Code', 'पैरेंट एक्सेस कोड')}</h3>
+                  <p className="text-[11px] text-white/70 mt-0.5">{t('Share this code with your parent', 'यह कोड अपने अभिभावक को दें')}</p>
+                </div>
+                <button
+                  onClick={() => setShowCodePopup(false)}
+                  className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-4 h-4 text-white" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 space-y-4">
+                {/* Code input with copy button */}
+                <div className="relative">
+                  <input
+                    readOnly
+                    value={parentCode.split('').join('  ')}
+                    className="w-full bg-muted rounded-xl py-4 px-4 font-mono text-2xl font-bold tracking-widest text-primary text-center border-2 border-border focus:outline-none select-all cursor-text"
+                  />
+                  <button
+                    onClick={copyCode}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                      copied ? 'bg-level/20 text-level' : 'bg-card hover:bg-primary/10 text-muted-foreground hover:text-primary border-2 border-border'
+                    }`}
+                  >
+                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {/* Timer */}
+                <div className="text-center space-y-1">
+                  <p className={`font-display font-bold text-lg ${codeSecondsLeft < 60 ? 'text-destructive' : 'text-secondary'}`}>
+                    ⏱ {fmtCountdown(codeSecondsLeft)}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">{t('Code valid for 3 minutes only', 'कोड केवल 3 मिनट के लिए वैध है')}</p>
+                </div>
+
+                {/* Generate new */}
+                <button
+                  onClick={generateParentCode}
+                  className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors py-1"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  {t('Generate new code', 'नया कोड बनाएं')}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

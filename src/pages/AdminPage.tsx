@@ -6,6 +6,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Users, Activity, TrendingUp, ArrowLeft, Search, X, Zap, Flame, Star, BookOpen, Trophy, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { fetchPracticeHistory, type PracticeHistory } from '@/lib/fetchHistory';
+import ThemeToggle from '@/components/ThemeToggle';
 
 const ADMIN_EMAIL = 'weareallforyou12345@gmail.com';
 
@@ -227,10 +228,11 @@ const AdminPage = () => {
           >
             <ArrowLeft className="w-4 h-4 text-white" />
           </button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="font-display font-bold text-lg md:text-xl text-white leading-tight">Admin Dashboard</h1>
             <p className="text-[11px] md:text-xs text-white/70">Vedic Math — User Overview</p>
           </div>
+          <ThemeToggle size="sm" className="bg-white/20 hover:bg-white/30 text-white" />
         </div>
       </div>
 
@@ -254,7 +256,7 @@ const AdminPage = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07 }}
-              className="bg-card rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-card border border-border text-center"
+              className="bg-card rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-card border-2 border-border text-center"
             >
               <div className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl ${stat.bg} flex items-center justify-center mx-auto mb-1.5 sm:mb-2`}>
                 <stat.icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${stat.color}`} />
@@ -271,7 +273,7 @@ const AdminPage = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-card rounded-2xl p-4 border border-border shadow-card"
+          className="bg-card rounded-2xl p-4 border-2 border-border shadow-card"
         >
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -293,7 +295,7 @@ const AdminPage = () => {
                   if (!active || !payload?.length) return null;
                   const entry = payload[0].payload as WeeklyDay;
                   return (
-                    <div className="bg-card border border-border rounded-xl px-3 py-2.5 shadow-card text-xs max-w-[180px]">
+                    <div className="bg-card border-2 border-border rounded-xl px-3 py-2.5 shadow-card text-xs max-w-[180px]">
                       <p className="font-bold text-foreground mb-1">{label} — {entry.active} active</p>
                       {entry.names.length > 0 ? (
                         <div className="space-y-0.5">
@@ -323,7 +325,7 @@ const AdminPage = () => {
           <div className="flex items-center gap-4 mt-2 justify-end">
             <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-primary inline-block" /><span className="text-[10px] text-muted-foreground">Today</span></div>
             <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-secondary inline-block" /><span className="text-[10px] text-muted-foreground">Active day</span></div>
-            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-muted inline-block border border-border" /><span className="text-[10px] text-muted-foreground">No activity</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-muted inline-block border-2 border-border" /><span className="text-[10px] text-muted-foreground">No activity</span></div>
           </div>
         </motion.div>
 
@@ -334,7 +336,7 @@ const AdminPage = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="bg-card rounded-2xl p-4 border border-border shadow-card"
+            className="bg-card rounded-2xl p-4 border-2 border-border shadow-card"
           >
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-xl bg-level/10 flex items-center justify-center">
@@ -365,7 +367,7 @@ const AdminPage = () => {
                   return (
                     <div key={u.user_id}
                       onClick={() => { setSelectedUser(u); setSelectedHistory(null); fetchPracticeHistory(u.user_id).then(setSelectedHistory); }}
-                      className="rounded-xl border border-border p-2.5 hover:bg-muted cursor-pointer transition-colors"
+                      className="rounded-xl border-2 border-border p-2.5 hover:bg-muted cursor-pointer transition-colors"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center text-[10px] font-display font-bold text-white flex-shrink-0">
@@ -409,7 +411,7 @@ const AdminPage = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35 }}
-            className="bg-card rounded-2xl p-4 border border-border shadow-card"
+            className="bg-card rounded-2xl p-4 border-2 border-border shadow-card"
           >
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-xl bg-destructive/10 flex items-center justify-center">
@@ -454,7 +456,7 @@ const AdminPage = () => {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or email…"
-            className="w-full bg-card border border-border rounded-xl pl-10 pr-10 py-2.5 text-sm outline-none focus:border-primary/40 transition-colors"
+            className="w-full bg-card border-2 border-border rounded-xl pl-10 pr-10 py-2.5 text-sm outline-none focus:border-primary/40 transition-colors"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-3.5 top-1/2 -translate-y-1/2">
@@ -486,7 +488,7 @@ const AdminPage = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
                 onClick={() => { setSelectedUser(user); setSelectedHistory(null); fetchPracticeHistory(user.user_id).then(setSelectedHistory); }}
-                className="bg-card rounded-2xl p-4 border border-border shadow-card hover:shadow-elevated hover:border-primary/30 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
+                className="bg-card rounded-2xl p-4 border-2 border-border shadow-card hover:shadow-elevated hover:border-primary/30 hover:scale-[1.02] transition-all duration-200 cursor-pointer"
               >
                 <div className="flex items-start gap-3">
                   {/* Avatar with gradient */}
@@ -571,7 +573,7 @@ const AdminPage = () => {
                     { icon: Flame, label: 'Streak', value: selectedUser.streak, cls: 'text-streak', bg: 'bg-streak/10' },
                     { icon: Star, label: 'Grade', value: selectedUser.grade_level ?? '—', cls: 'text-badge', bg: 'bg-badge/10' },
                   ].map(s => (
-                    <div key={s.label} className="bg-card rounded-xl p-3 text-center border border-border shadow-card">
+                    <div key={s.label} className="bg-card rounded-xl p-3 text-center border-2 border-border shadow-card">
                       <div className={`w-7 h-7 rounded-lg ${s.bg} flex items-center justify-center mx-auto mb-1.5`}>
                         <s.icon className={`w-3.5 h-3.5 ${s.cls}`} />
                       </div>
@@ -582,7 +584,7 @@ const AdminPage = () => {
                 </div>
 
                 {/* Timeline */}
-                <div className="bg-card rounded-xl p-4 border border-border shadow-card">
+                <div className="bg-card rounded-xl p-4 border-2 border-border shadow-card">
                   <p className="font-display font-bold text-xs text-muted-foreground uppercase tracking-wide mb-3">Timeline</p>
                   {[
                     ['Joined', formatDate(selectedUser.joined_at)],
@@ -597,7 +599,7 @@ const AdminPage = () => {
                 </div>
 
                 {/* Pages Visited */}
-                <div className="bg-card rounded-xl p-4 border border-border shadow-card">
+                <div className="bg-card rounded-xl p-4 border-2 border-border shadow-card">
                   <p className="font-display font-bold text-xs text-muted-foreground uppercase tracking-wide mb-3">Pages Visited</p>
                   {selectedUser.activity.page_visits.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No visits recorded yet</p>
@@ -629,7 +631,7 @@ const AdminPage = () => {
                 </div>
 
                 {/* Practice Categories */}
-                <div className="bg-card rounded-xl p-4 border border-border shadow-card">
+                <div className="bg-card rounded-xl p-4 border-2 border-border shadow-card">
                   <p className="font-display font-bold text-xs text-muted-foreground uppercase tracking-wide mb-3">Practice Categories</p>
                   {selectedUser.activity.practice_categories.length === 0 ? (
                     <p className="text-xs text-muted-foreground">No practice recorded yet</p>
@@ -661,7 +663,7 @@ const AdminPage = () => {
                 </div>
 
                 {/* Practice History */}
-                <div className="bg-card rounded-xl p-4 border border-border shadow-card">
+                <div className="bg-card rounded-xl p-4 border-2 border-border shadow-card">
                   <p className="font-display font-bold text-xs text-muted-foreground uppercase tracking-wide mb-3">Practice History</p>
                   {!selectedHistory ? (
                     <div className="flex items-center justify-center py-4">

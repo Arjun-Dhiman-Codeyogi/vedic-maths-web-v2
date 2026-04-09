@@ -266,7 +266,7 @@ const SolverPage = () => {
               <button onClick={openCamera} className="gradient-primary text-primary-foreground px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-warm hover:scale-105 transition-transform">
                 <Camera className="w-4 h-4" /> {t('Camera', 'कैमरा')}
               </button>
-              <button onClick={() => galleryInputRef.current?.click()} className="bg-card border border-border text-foreground px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-card hover:scale-105 transition-transform">
+              <button onClick={() => galleryInputRef.current?.click()} className="bg-card border-2 border-border text-foreground px-5 py-2.5 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-card hover:scale-105 transition-transform">
                 <Upload className="w-4 h-4" /> {t('Gallery', 'गैलरी')}
               </button>
             </div>
@@ -279,7 +279,7 @@ const SolverPage = () => {
               onChange={(e) => setTextInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleTextSolve()}
               placeholder={t('Or type a problem: 47 × 53', 'या सवाल टाइप करें: 47 × 53')}
-              className="flex-1 bg-card border border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="flex-1 bg-card border-2 border-border rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             <button onClick={handleTextSolve} className="gradient-primary text-primary-foreground px-4 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-warm">
               <Wand2 className="w-4 h-4" /> {t('Solve', 'हल करो')}
@@ -357,7 +357,7 @@ const SolverPage = () => {
 
           {/* Solution Language Toggle */}
           <div className="flex justify-center">
-            <div className="flex items-center gap-2 bg-card border border-border rounded-full p-1">
+            <div className="flex items-center gap-2 bg-card border-2 border-border rounded-full p-1">
               <button
                 onClick={() => setSolutionLang('en')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-display font-bold transition-all ${solutionLang === 'en' ? 'gradient-primary text-primary-foreground shadow-warm' : 'text-muted-foreground hover:text-foreground'}`}
@@ -375,7 +375,7 @@ const SolverPage = () => {
 
           {/* Explanation in selected language */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-muted/50 rounded-xl p-3 border border-border">
+            <div className="bg-muted/50 rounded-xl p-3 border-2 border-border">
               <p className="text-[10px] font-bold text-muted-foreground uppercase mb-1">{solutionLang === 'en' ? 'Traditional Explanation' : 'पारंपरिक व्याख्या'}</p>
               <p className="text-xs text-foreground leading-relaxed">{solutionLang === 'en' ? solution.traditional.explanation_en : solution.traditional.explanation_hi}</p>
             </div>
@@ -388,7 +388,7 @@ const SolverPage = () => {
           {/* Dual Solutions Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {/* Traditional */}
-            <div className="bg-card rounded-xl p-4 shadow-card border border-border">
+            <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border">
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-xs font-bold text-muted-foreground uppercase">{t('Traditional Method', 'पारंपरिक तरीका')}</span>
               </div>
@@ -437,7 +437,7 @@ const SolverPage = () => {
             const tradPercent = (tradTime / maxTime) * 100;
             const vedPercent = (vedTime / maxTime) * 100;
             return (
-              <div className="bg-card rounded-xl p-4 shadow-card border border-border space-y-3">
+              <div className="bg-card rounded-xl p-4 shadow-card border-2 border-border space-y-3">
                 <h4 className="font-display font-bold text-sm text-center">{t('⏱ Time Comparison', '⏱ समय तुलना')}</h4>
                 <div className="space-y-2">
                   <div>
@@ -455,7 +455,7 @@ const SolverPage = () => {
                       <span className="font-bold text-green-600 dark:text-green-400">{solution.vedic.time}</span>
                     </div>
                     <div className="h-4 bg-muted rounded-full overflow-hidden">
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${vedPercent}%` }} transition={{ duration: 0.8, delay: 0.4 }} className="h-full bg-green-500 rounded-full" />
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${vedPercent}%` }} transition={{ duration: 0.8, delay: 0.4 }} className="h-full bg-green-500 dark:bg-green-400 rounded-full" />
                     </div>
                   </div>
                 </div>
@@ -466,17 +466,17 @@ const SolverPage = () => {
 
           {/* Image preview if used */}
           {capturedImage && (
-            <div className="rounded-xl overflow-hidden border border-border max-h-40">
+            <div className="rounded-xl overflow-hidden border-2 border-border max-h-40">
               <img src={capturedImage} alt="Problem" className="w-full object-contain max-h-40" />
             </div>
           )}
 
           {/* Solve another */}
           <div className="flex gap-3 justify-center pt-2">
-            <button onClick={openCamera} className="bg-card border border-border text-foreground px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-card">
+            <button onClick={openCamera} className="bg-card border-2 border-border text-foreground px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-card">
               <Camera className="w-4 h-4" /> {t('New Photo', 'नई फोटो')}
             </button>
-            <button onClick={() => { setSolution(null); setCapturedImage(null); setChatMessages([]); synthRef.current.cancel(); setIsSpeaking(false); }} className="bg-card border border-border text-foreground px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-card">
+            <button onClick={() => { setSolution(null); setCapturedImage(null); setChatMessages([]); synthRef.current.cancel(); setIsSpeaking(false); }} className="bg-card border-2 border-border text-foreground px-4 py-2 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-card">
               <Wand2 className="w-4 h-4" /> {t('Type Problem', 'सवाल लिखें')}
             </button>
           </div>
@@ -484,7 +484,7 @@ const SolverPage = () => {
       )}
 
       {/* ── Standalone AI Chat ─────────────────────────────────────────── */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden">
+      <div className="bg-card rounded-xl border-2 border-border overflow-hidden">
         <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/30">
           <MessageCircle className="w-4 h-4 text-primary" />
           <span className="font-display font-bold text-sm">{t('Chat with AI', 'AI से बात करें')}</span>
@@ -533,7 +533,7 @@ const SolverPage = () => {
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
             placeholder={t('Type your message…', 'अपना संदेश लिखें…')}
-            className="flex-1 bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="flex-1 bg-background border-2 border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <button
             onClick={sendChatMessage}

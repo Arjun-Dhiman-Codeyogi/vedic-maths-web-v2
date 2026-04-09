@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { GameProvider } from "./contexts/GameContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import LearnPage from "./pages/LearnPage";
@@ -18,12 +19,15 @@ import AboutPage from "./pages/AboutPage";
 import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 import AdminPage from "./pages/AdminPage";
+import ParentDashboard from "./pages/ParentDashboard";
+import EmailRedirect from "./pages/EmailRedirect";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <ThemeProvider>
       <LanguageProvider>
         <GameProvider>
           <Toaster />
@@ -43,11 +47,14 @@ const App = () => (
               </Route>
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/admin" element={<AdminPage />} />
+              <Route path="/parent" element={<ParentDashboard />} />
+              <Route path="/go" element={<EmailRedirect />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </GameProvider>
       </LanguageProvider>
+      </ThemeProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );

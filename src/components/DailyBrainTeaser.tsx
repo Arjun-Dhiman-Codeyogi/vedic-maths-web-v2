@@ -95,7 +95,7 @@ const DailyBrainTeaser = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.6 }}
-      className="bg-card rounded-xl p-4 shadow-card border border-border"
+      className="bg-card rounded-xl p-4 shadow-card border-2 border-border"
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -126,14 +126,14 @@ const DailyBrainTeaser = () => {
 
           <div className="grid grid-cols-2 gap-2 mb-3">
             {teaser.options.map((option, i) => {
-              let optionClass = 'border border-border bg-muted/50 hover:bg-muted text-foreground';
+              let optionClass = 'border-2 border-border bg-muted/50 hover:bg-muted text-foreground';
               if (answered) {
                 if (i === teaser.answer) {
-                  optionClass = 'border-2 border-green-500 bg-green-500/10 text-green-700 dark:text-green-400';
+                  optionClass = 'border-2 border-green-500 dark:border-green-400 bg-green-500/10 dark:bg-green-400/10 text-green-700 dark:text-green-400';
                 } else if (i === selected && !isCorrect) {
-                  optionClass = 'border-2 border-red-500 bg-red-500/10 text-red-700 dark:text-red-400';
+                  optionClass = 'border-2 border-red-500 dark:border-red-400 bg-red-500/10 dark:bg-red-400/10 text-red-700 dark:text-red-400';
                 } else {
-                  optionClass = 'border border-border bg-muted/30 text-muted-foreground opacity-60';
+                  optionClass = 'border-2 border-border bg-muted/30 text-muted-foreground opacity-60';
                 }
               }
               return (
@@ -154,7 +154,7 @@ const DailyBrainTeaser = () => {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className={`rounded-lg p-3 mb-2 ${isCorrect ? 'bg-green-500/10' : 'bg-red-500/10'}`}
+              className={`rounded-lg p-3 mb-2 ${isCorrect ? 'bg-green-500/10 dark:bg-green-400/10' : 'bg-red-500/10 dark:bg-red-400/10'}`}
             >
               <div className="flex items-center gap-2 mb-1">
                 {isCorrect ? (

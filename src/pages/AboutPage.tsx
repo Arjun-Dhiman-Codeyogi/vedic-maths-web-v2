@@ -28,13 +28,13 @@ const AboutPage = () => {
         animate={{ opacity: 1, y: 0 }}
         className="gradient-hero rounded-2xl p-6 md:p-10 text-primary-foreground text-center relative overflow-hidden"
       >
-        <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/10" />
-        <div className="absolute -left-8 -bottom-8 w-24 h-24 rounded-full bg-white/10" />
+        <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-white/10 dark:bg-green-400/10" />
+        <div className="absolute -left-8 -bottom-8 w-24 h-24 rounded-full bg-white/10 dark:bg-green-400/10" />
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.2, type: 'spring' }}
-          className="w-20 h-20 gradient-warm rounded-2xl flex items-center justify-center mx-auto mb-4 border-4 border-white/30 shadow-lg rotate-6"
+          className="w-20 h-20 gradient-warm rounded-2xl flex items-center justify-center mx-auto mb-4 border-4 border-white/30 dark:border-green-400/30 shadow-lg rotate-6"
         >
           <span className="text-4xl font-display font-bold text-primary-foreground -rotate-6">M</span>
         </motion.div>
@@ -55,7 +55,7 @@ const AboutPage = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * i }}
-            className="bg-card rounded-xl p-3 shadow-card border border-border text-center"
+            className="bg-card rounded-xl p-3 shadow-card border-2 border-border text-center"
           >
             <p className="font-display font-bold text-lg gradient-text">{stat.value}</p>
             <p className="text-[10px] text-muted-foreground font-medium">{stat.label}</p>
@@ -68,7 +68,7 @@ const AboutPage = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-card rounded-xl p-5 shadow-card border border-border"
+        className="bg-card rounded-xl p-5 shadow-card border-2 border-border"
       >
         <div className="flex items-center gap-2 mb-3">
           <Heart className="w-5 h-5 text-destructive" />
@@ -92,7 +92,7 @@ const AboutPage = () => {
               initial={{ opacity: 0, x: i % 2 === 0 ? -15 : 15 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 * i + 0.3 }}
-              className="bg-card rounded-xl p-4 shadow-card border border-border flex gap-3"
+              className="bg-card rounded-xl p-4 shadow-card border-2 border-border flex gap-3"
             >
               <div className="w-10 h-10 gradient-primary rounded-lg flex items-center justify-center shrink-0">
                 <f.icon className="w-5 h-5 text-primary-foreground" />
@@ -111,7 +111,7 @@ const AboutPage = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="bg-card rounded-xl p-5 shadow-card border border-border"
+        className="bg-card rounded-xl p-5 shadow-card border-2 border-border"
       >
         <div className="flex items-center gap-2 mb-3">
           <Users className="w-5 h-5 text-secondary" />
@@ -158,7 +158,7 @@ const AboutPage = () => {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.65 }}
-        className="bg-card rounded-xl p-5 shadow-card border border-border"
+        className="bg-card rounded-xl p-5 shadow-card border-2 border-border"
       >
         <div className="flex items-center gap-2 mb-4">
           <Code className="w-5 h-5 text-primary" />

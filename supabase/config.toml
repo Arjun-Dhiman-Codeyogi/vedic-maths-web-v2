@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.solver-chat]
 verify_jwt = false
+
+[functions.send-daily-emails]
+verify_jwt = false

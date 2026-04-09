@@ -119,15 +119,21 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, 1000);
   };
 
+  const initUser = async (u: { id: string; email?: string; user_metadata?: Record<string, unknown> }) => {
+    const displayName = (u.user_metadata?.display_name as string) || u.email?.split('@')[0] || 'Student';
+    setUserId(u.id);
+    setStudent(prev => ({ ...prev, name: displayName }));
+    // Check role — parents don't have student_profiles
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', u.id).single();
+    if (profile?.role === 'parent') return; // skip student-specific data
+    ensureProfileExists(u.id, u.email || '', displayName);
+    loadProgress(u.id);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const u = session.user;
-        const displayName = u.user_metadata?.display_name || u.email?.split('@')[0] || 'Student';
-        setUserId(u.id);
-        setStudent(prev => ({ ...prev, name: displayName }));
-        ensureProfileExists(u.id, u.email || '', displayName);
-        loadProgress(u.id);
+        initUser(session.user);
       } else {
         setUserId(null);
         setStudent({ ...defaultStudent });
@@ -135,14 +141,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const u = session.user;
-        const displayName = u.user_metadata?.display_name || u.email?.split('@')[0] || 'Student';
-        setUserId(u.id);
-        setStudent(prev => ({ ...prev, name: displayName }));
-        ensureProfileExists(u.id, u.email || '', displayName);
-        loadProgress(u.id);
-      }
+      if (session?.user) initUser(session.user);
     });
 
     return () => subscription.unsubscribe();

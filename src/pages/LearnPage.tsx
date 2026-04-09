@@ -104,15 +104,16 @@ const LearnPage = () => {
 
       {/* 📜 Vedic Sutras - Featured Section */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15 }}
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-30px' }}
+        transition={{ duration: 0.45 }}
         className="relative overflow-hidden rounded-2xl border-2 border-accent/30 bg-gradient-to-br from-accent/10 via-card to-secondary/10 p-1"
       >
         <Link to="/sutras" className="block rounded-xl bg-card/80 backdrop-blur-sm p-5 hover:bg-card/60 transition-all group">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl gradient-hero flex items-center justify-center flex-shrink-0 shadow-warm group-hover:scale-110 transition-transform">
-              <ScrollText className="w-8 h-8 text-primary-foreground" />
+              <ScrollText className="w-8 h-8 text-primary-foreground dark:text-white" />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
@@ -137,12 +138,13 @@ const LearnPage = () => {
           <motion.div
             key={topic.id}
             initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.05 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: '-20px' }}
+            transition={{ delay: i * 0.04, duration: 0.35 }}
           >
             <Link
               to={topic.locked ? '#' : `/practice?topic=${topic.id}`}
-              className={`flex items-center gap-3 bg-card rounded-xl p-4 shadow-card border border-border transition-all active:scale-[0.98] ${topic.locked ? 'opacity-50' : ''}`}
+              className={`flex items-center gap-3 bg-card rounded-xl p-4 shadow-card border-2 border-border transition-all active:scale-[0.98] ${topic.locked ? 'opacity-50' : ''}`}
             >
               <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-xl flex-shrink-0">
                 {topic.icon}

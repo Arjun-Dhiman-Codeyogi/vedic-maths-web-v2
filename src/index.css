@@ -69,33 +69,59 @@
   }
 
   .dark {
-    --background: 0 20% 8%;
-    --foreground: 30 20% 95%;
-    --card: 0 15% 12%;
-    --card-foreground: 30 20% 95%;
-    --popover: 0 15% 12%;
-    --popover-foreground: 30 20% 95%;
-    --primary: 0 75% 55%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 25 90% 55%;
+    /* Pure black bg, dark-green cards, white text, #00FF00 accents */
+    --background: 0 0% 11%;
+    --foreground: 0 0% 100%;
+
+    --card: 120 100% 4%;
+    --card-foreground: 0 0% 100%;
+
+    --popover: 120 100% 5%;
+    --popover-foreground: 0 0% 100%;
+
+    --primary: 120 100% 50%;
+    --primary-foreground: 0 0% 0%;
+
+    --secondary: 120 30% 20%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 15% 18%;
-    --muted-foreground: 25 15% 60%;
-    --accent: 35 100% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
+
+    --muted: 120 40% 8%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 120 100% 50%;
+    --accent-foreground: 0 0% 0%;
+
+    --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 15% 20%;
-    --input: 0 15% 20%;
-    --ring: 0 75% 55%;
-    --sidebar-background: 0 15% 10%;
-    --sidebar-foreground: 30 20% 95%;
-    --sidebar-primary: 0 75% 55%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 15% 16%;
-    --sidebar-accent-foreground: 30 20% 95%;
-    --sidebar-border: 0 15% 18%;
-    --sidebar-ring: 0 75% 55%;
+
+    --border: 120 60% 12%;
+    --input: 120 50% 7%;
+    --ring: 120 100% 50%;
+
+    --gradient-primary: #00FF00;
+    --gradient-warm: #00cc00;
+    --gradient-hero: #000d00;
+    --gradient-card: #010801;
+    --gradient-dark: #000000;
+
+    --shadow-warm: 0 4px 20px -4px rgba(0, 255, 0, 0.25);
+    --shadow-glow: 0 0 30px -5px rgba(0, 255, 0, 0.35);
+    --shadow-card: 0 2px 12px -2px rgba(0, 0, 0, 0.7);
+    --shadow-elevated: 0 8px 30px -6px rgba(0, 0, 0, 0.8);
+
+    --sidebar-background: 180 10% 15%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 120 100% 50%;
+    --sidebar-primary-foreground: 0 0% 0%;
+    --sidebar-accent: 120 40% 7%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 120 60% 10%;
+    --sidebar-ring: 120 100% 50%;
+
+    --xp-gold: 45 100% 55%;
+    --streak-fire: 15 90% 55%;
+    --level-emerald: 120 100% 50%;
+    --badge-purple: 270 60% 65%;
   }
 }
 
@@ -159,6 +185,15 @@
     box-shadow: var(--shadow-card);
   }
 
+  /* Global card hover lift */
+  .shadow-card {
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+  .shadow-card:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-2px);
+  }
+
   .safe-bottom {
     padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
   }
@@ -170,4 +205,56 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+}
+
+/* Dark mode — flat colors, no gradients, pure white text */
+.dark .gradient-primary {
+  background: #00FF00;
+}
+.dark .gradient-warm {
+  background: #00cc00;
+}
+.dark .gradient-hero {
+  background: linear-gradient(160deg, #001a00, #003300, #004d00);
+  border: 1px solid #00FF00;
+}
+.dark .gradient-card {
+  background: #050f05;
+}
+.dark .glass-card {
+  background: rgba(0, 20, 0, 0.7);
+}
+.dark .gradient-hero p,
+.dark .gradient-hero h2,
+.dark .gradient-hero span,
+.dark .gradient-hero div {
+  color: #ffffff;
+}
+.dark .gradient-hero .bg-white\/20 {
+  background: rgba(0, 255, 0, 0.12) !important;
+}
+.dark .gradient-hero .bg-white\/90 {
+  background: #00FF00 !important;
+}
+.dark .gradient-hero .bg-white\/10,
+.dark .gradient-hero .bg-white\/5 {
+  background: rgba(0, 255, 0, 0.06) !important;
+}
+.dark .gradient-text {
+  background: #00FF00;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.dark .shadow-warm {
+  box-shadow: 0 4px 20px -4px rgba(0, 255, 0, 0.25);
+}
+.dark .shadow-glow {
+  box-shadow: 0 0 30px -5px rgba(0, 255, 0, 0.35);
+}
+.dark .shadow-card {
+  box-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.7);
+}
+.dark .shadow-elevated {
+  box-shadow: 0 8px 30px -6px rgba(0, 0, 0, 0.8);
 }

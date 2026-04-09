@@ -6,19 +6,31 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const [checked, setChecked] = useState(false);
 
+  const checkSession = async (session: { user: { id: string } } | null) => {
+    if (!session) {
+      navigate('/auth', { replace: true });
+      setChecked(true);
+      return;
+    }
+    // Check role — parent users go to /parent dashboard
+    const { data } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', session.user.id)
+      .single();
+    if (data?.role === 'parent') {
+      navigate('/parent', { replace: true });
+    }
+    setChecked(true);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate('/auth', { replace: true });
-      }
-      setChecked(true);
+      checkSession(session);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate('/auth', { replace: true });
-      }
-      setChecked(true);
+      checkSession(session);
     });
 
     return () => subscription.unsubscribe();

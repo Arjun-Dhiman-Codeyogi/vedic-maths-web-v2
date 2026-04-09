@@ -314,9 +314,9 @@ const SutrasPage = () => {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         <div className="gradient-hero rounded-2xl p-6 text-primary-foreground text-center relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-28 h-28 rounded-full bg-white/10" />
-          <div className="absolute -left-8 -bottom-8 w-20 h-20 rounded-full bg-white/10" />
-          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-90" />
+          <div className="absolute -right-10 -top-10 w-28 h-28 rounded-full bg-white/10 dark:bg-green-400/10" />
+          <div className="absolute -left-8 -bottom-8 w-20 h-20 rounded-full bg-white/10 dark:bg-green-400/10" />
+          <BookOpen className="w-10 h-10 mx-auto mb-3 opacity-90 dark:text-white" />
           <h1 className="font-display font-bold text-2xl mb-1">{t('Vedic Math Sutras', 'वैदिक गणित सूत्र')}</h1>
           <p className="text-sm opacity-80">{t(`All ${sutras.length} Sutras with detailed explanations`, `सभी ${sutras.length} सूत्र विस्तृत व्याख्या के साथ`)}</p>
         </div>
@@ -327,7 +327,7 @@ const SutrasPage = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-card rounded-xl p-4 shadow-card border border-border"
+        className="bg-card rounded-xl p-4 shadow-card border-2 border-border"
       >
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-lg gradient-warm flex items-center justify-center shrink-0">
@@ -355,7 +355,7 @@ const SutrasPage = () => {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
-              className="bg-card rounded-xl shadow-card border border-border overflow-hidden"
+              className="bg-card rounded-xl shadow-card border-2 border-border overflow-hidden"
             >
               {/* Sutra Header */}
               <button

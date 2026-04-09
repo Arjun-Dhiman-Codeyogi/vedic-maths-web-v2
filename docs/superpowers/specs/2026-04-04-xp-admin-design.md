@@ -8,7 +8,7 @@
 ## Feature 1: XP Points Per Correct Answer
 
 ### Goal
-Award XP to users immediately on each correct answer in PracticePage, saved to their profile in Supabase.
+Award XP to users immediately on each correct answer in PracticePage, saved to their profile in Supabase. and should show on the user's profile.
 
 ### XP Rules
 - Easy difficulty: 1 XP per correct answer

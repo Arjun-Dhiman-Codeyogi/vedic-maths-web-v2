@@ -147,7 +147,7 @@ const VideosPage = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-card rounded-2xl border border-border shadow-card overflow-hidden"
+            className="bg-card rounded-2xl border-2 border-border shadow-card overflow-hidden"
           >
             {/* Topic Header */}
             <button

@@ -81,8 +81,8 @@ const Bead = ({
   active: boolean; y: number; onClick: () => void; color: 'primary' | 'warm' | 'muted';
 }) => {
   const bg =
-    color === 'primary' ? 'from-red-500 to-orange-400'
-    : color === 'warm'  ? 'from-orange-400 to-yellow-300'
+    color === 'primary' ? 'from-red-500 to-orange-400 dark:from-green-500 dark:to-green-700'
+    : color === 'warm'  ? 'from-orange-400 to-yellow-300 dark:from-green-600 dark:to-green-800'
     : 'from-stone-200 to-stone-300 dark:from-stone-600 dark:to-stone-700';
 
   return (
@@ -118,14 +118,14 @@ const AbacusRod = ({
   return (
     <div className="flex flex-col items-center" style={{ width: `${100 / RODS}%` }}>
       {/* Place label */}
-      <span className="text-[9px] sm:text-[10px] font-bold text-amber-800/70 mb-1 font-mono">
+      <span className="text-[9px] sm:text-[10px] font-bold text-amber-800/70 dark:text-green-400/70 mb-1 font-mono">
         {placeLabel(rodIdx)}
       </span>
 
       {/* Top section (heaven) */}
       <div className="relative w-full flex items-center justify-center" style={{ height: 76 }}>
         {/* Rod */}
-        <div className="absolute inset-x-1/2 top-0 bottom-0 w-[3px] -translate-x-1/2 rounded-full bg-amber-700/60" />
+        <div className="absolute inset-x-1/2 top-0 bottom-0 w-[3px] -translate-x-1/2 rounded-full bg-amber-700/60 dark:bg-gray-600/60" />
         <Bead
           active={rod.top}
           y={topBeadY(rod.top)}
@@ -135,12 +135,12 @@ const AbacusRod = ({
       </div>
 
       {/* Beam (center divider) */}
-      <div className="w-full h-[10px] bg-gradient-to-b from-amber-600 to-amber-800 shadow-md z-10 relative" />
+      <div className="w-full h-[10px] bg-gradient-to-b from-amber-600 to-amber-800 dark:from-gray-700 dark:to-gray-800 shadow-md z-10 relative" />
 
       {/* Bottom section (earth) */}
       <div className="relative w-full" style={{ height: SECTION_H }}>
         {/* Rod */}
-        <div className="absolute inset-x-1/2 top-0 bottom-0 w-[3px] -translate-x-1/2 rounded-full bg-amber-700/60" />
+        <div className="absolute inset-x-1/2 top-0 bottom-0 w-[3px] -translate-x-1/2 rounded-full bg-amber-700/60 dark:bg-gray-600/60" />
         {[0, 1, 2, 3].map(bi => (
           <Bead
             key={bi}
@@ -241,9 +241,9 @@ const AbacusPage = () => {
         </div>
         <button
           onClick={() => { setAbacus(initAbacus()); setDrillState('idle'); if (timerRef.current) clearInterval(timerRef.current); }}
-          className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl border border-amber-200 dark:border-amber-800"
+          className="p-2 bg-amber-100 dark:bg-green-900/30 rounded-xl border border-amber-200 dark:border-green-800 hover:scale-105 transition-transform"
         >
-          <RotateCcw className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+          <RotateCcw className="w-5 h-5 text-amber-700 dark:text-green-400" />
         </button>
       </div>
 
@@ -317,7 +317,7 @@ const AbacusPage = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="bg-card rounded-2xl p-4 border border-border shadow-card space-y-3"
+            className="bg-card rounded-2xl p-4 border-2 border-border shadow-card space-y-3"
           >
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 gradient-primary rounded-xl flex items-center justify-center">
@@ -367,7 +367,7 @@ const AbacusPage = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="bg-card rounded-2xl p-4 border border-border shadow-card space-y-3"
+            className="bg-card rounded-2xl p-4 border-2 border-border shadow-card space-y-3"
           >
             {/* Stats bar */}
             <div className="flex items-center gap-3">
@@ -425,7 +425,7 @@ const AbacusPage = () => {
             <div className="flex gap-2">
               <button
                 onClick={showHint}
-                className="flex-1 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 rounded-xl border-2 border-border text-xs font-bold text-muted-foreground hover:bg-muted transition-colors flex items-center justify-center gap-1.5"
               >
                 <ChevronUp className="w-3.5 h-3.5" /> {t('Show Hint', 'हिंट दिखाओ')}
               </button>
@@ -444,7 +444,7 @@ const AbacusPage = () => {
             key="done"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-card rounded-2xl p-6 border border-border shadow-card text-center space-y-4"
+            className="bg-card rounded-2xl p-6 border-2 border-border shadow-card text-center space-y-4"
           >
             <div className="text-5xl">{score === 0 ? '😅' : score >= 8 ? '🏆' : '⭐'}</div>
             <div>
@@ -458,7 +458,7 @@ const AbacusPage = () => {
                 <Star
                   key={i}
                   className={`w-8 h-8 transition-all ${
-                    i < stars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'
+                    i < stars ? 'text-yellow-400 fill-yellow-400 dark:text-green-400 dark:fill-green-400' : 'text-muted-foreground/30'
                   }`}
                 />
               ))}
@@ -486,7 +486,7 @@ const AbacusPage = () => {
             <div className="flex gap-2">
               <button
                 onClick={() => setDrillState('idle')}
-                className="flex-1 py-2.5 rounded-xl border border-border text-sm font-bold hover:bg-muted transition-colors"
+                className="flex-1 py-2.5 rounded-xl border-2 border-border text-sm font-bold hover:bg-muted transition-colors"
               >
                 {t('Change Level', 'स्तर बदलो')}
               </button>

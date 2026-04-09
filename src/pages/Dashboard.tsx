@@ -28,8 +28,8 @@ const Dashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         className="gradient-hero rounded-2xl p-5 text-primary-foreground relative overflow-hidden"
       >
-        <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 blur-sm" />
-        <div className="absolute -right-2 -bottom-8 w-20 h-20 rounded-full bg-white/5" />
+        <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/10 dark:bg-green-400/20 blur-sm" />
+        <div className="absolute -right-2 -bottom-8 w-20 h-20 rounded-full bg-white/5 dark:bg-green-400/10" />
         <div className="relative z-10">
           <p className="text-sm opacity-90 font-medium">{t('Welcome back', 'वापस स्वागत है')} 👋</p>
           <h2 className="text-2xl font-display font-bold mt-1">{student.name}!</h2>
@@ -38,9 +38,9 @@ const Dashboard = () => {
               <span>{t('Level', 'स्तर')} {student.level}</span>
               <span>{student.xp}/{student.xpToNext} XP</span>
             </div>
-            <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+            <div className="h-2 bg-white/20 dark:bg-green-400/20 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-white/90 rounded-full"
+                className="h-full bg-white/90 dark:bg-primary/80 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${xpPercent}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
@@ -57,9 +57,10 @@ const Dashboard = () => {
           {quickActions.map((action, i) => (
             <motion.div
               key={action.path}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.1 }}
+              initial={{ opacity: 0, scale: 0.9, y: 12 }}
+              whileInView={{ opacity: 1, scale: 1, y: 0 }}
+              viewport={{ once: true, margin: '-40px' }}
+              transition={{ delay: i * 0.08, duration: 0.4 }}
             >
               <Link
                 to={action.path}
@@ -85,10 +86,11 @@ const Dashboard = () => {
           ].map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 + i * 0.08 }}
-              className="bg-card rounded-xl p-3 shadow-card text-center"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-30px' }}
+              transition={{ delay: i * 0.07, duration: 0.4 }}
+              className="bg-card rounded-xl p-3 shadow-card border-2 border-border text-center"
             >
               <stat.icon className={`w-5 h-5 mx-auto mb-1 ${stat.color}`} />
               <p className="text-lg font-bold font-display">{stat.value}</p>
@@ -100,10 +102,11 @@ const Dashboard = () => {
 
       {/* Weekly Challenge */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-card rounded-xl p-4 shadow-card border border-border"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-30px' }}
+        transition={{ duration: 0.45 }}
+        className="bg-card rounded-xl p-4 shadow-card border-2 border-border"
       >
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
@@ -115,7 +118,7 @@ const Dashboard = () => {
         <p className="text-xs text-muted-foreground mb-2">{t('Solve 50 multiplication problems', '50 गुणा के सवाल हल करें')}</p>
         <Progress value={60} className="h-2" />
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs font-bold text-secondary">+100 XP {t('Reward', 'इनाम')}</span>
+          <span className="text-xs font-bold text-green-600 dark:text-green-400">+100 XP {t('Reward', 'इनाम')}</span>
           <Link to="/practice" className="text-xs font-bold text-primary flex items-center gap-1">
             {t('Continue', 'जारी रखें')} <ArrowRight className="w-3 h-3" />
           </Link>
@@ -133,7 +136,7 @@ const Dashboard = () => {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.6 + i * 0.1 }}
-                className="bg-card rounded-2xl p-4 shadow-card border border-border text-center"
+                className="bg-card rounded-2xl p-4 shadow-card border-2 border-border text-center"
               >
                 <div className="w-14 h-14 mx-auto rounded-xl gradient-primary flex items-center justify-center mb-2">
                   <span className="text-3xl">{badge.split(' ')[0]}</span>
@@ -150,7 +153,7 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-card rounded-xl p-4 shadow-card border border-border text-center"
+          className="bg-card rounded-xl p-4 shadow-card border-2 border-border text-center"
         >
           <Trophy className="w-10 h-10 mx-auto mb-2 text-xp" />
           <h3 className="font-display font-bold text-sm">{t('Earn Your First Badge!', 'अपना पहला बैज कमाएं!')}</h3>
@@ -169,7 +172,7 @@ const Dashboard = () => {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
-        className="bg-card rounded-xl p-4 shadow-card border border-border"
+        className="bg-card rounded-xl p-4 shadow-card border-2 border-border"
       >
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center">
@@ -209,7 +212,7 @@ const Dashboard = () => {
             >
               <Link
                 to={challenge.path}
-                className="flex items-center gap-3 p-4 bg-card rounded-xl shadow-card border border-border hover:shadow-elevated transition-shadow"
+                className="flex items-center gap-3 p-4 bg-card rounded-xl shadow-card border-2 border-border hover:shadow-elevated transition-shadow"
               >
                 <span className="text-2xl">{challenge.icon}</span>
                 <div className="flex-1">

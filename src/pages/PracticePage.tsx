@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useSearchParams } from 'react-router-dom';
 import { logActivity } from '@/lib/logActivity';
 import { supabase } from '@/integrations/supabase/client';
-
-type Difficulty = 'easy' | 'medium' | 'hard';
+import { getQuestion, classToDefaultDifficulty, type Difficulty } from '@/data/questionBank';
 type PracticeCategory = 'vedic' | 'finger' | 'brain';
 
 type VedicOp = '+' | '-' | '×' | '÷' | 'x²' | '√' | 'x³' | '∛' | '%' | 'alg';
@@ -60,209 +59,6 @@ const categoryLabels: Record<PracticeCategory, { en: string; hi: string }> = {
   brain: { en: 'Brain Dev', hi: 'मस्तिष्क विकास' },
 };
 
-interface Problem {
-  display: string;
-  answer: number;
-  hint: { en: string; hi: string };
-  solution?: { en: string; hi: string };
-}
-
-const generateFingerProblem = (difficulty: Difficulty, op: FingerOp): Problem => {
-  switch (op) {
-    case 'f-count': {
-      // "How many fingers show this number?" — show a number, answer is the number
-      const n = difficulty === 'easy' ? Math.floor(Math.random() * 10) + 1 : difficulty === 'medium' ? Math.floor(Math.random() * 50) + 10 : Math.floor(Math.random() * 99) + 1;
-      return { display: `🖐️ Show ${n} on fingers. How many fingers up?`, answer: n, hint: { en: 'Right hand = 1-5, Left hand = 6-10. Use tens for bigger numbers!', hi: 'दायां हाथ = 1-5, बायां हाथ = 6-10। बड़ी संख्या के लिए दहाई प्रयोग करें!' } };
-    }
-    case 'f-add': {
-      const max = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 10 : 15;
-      const a = Math.floor(Math.random() * max) + 1;
-      const b = Math.floor(Math.random() * max) + 1;
-      return { display: `🖐️ ${a} + ${b}`, answer: a + b, hint: { en: 'Start with bigger number on fingers, count up the smaller one', hi: 'बड़ी संख्या उंगलियों पर रखें, छोटी गिनें' } };
-    }
-    case 'f-sub': {
-      const max = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 15 : 20;
-      const a = Math.floor(Math.random() * max) + 5;
-      const b = Math.floor(Math.random() * Math.min(a, max)) + 1;
-      return { display: `🖐️ ${a} - ${b}`, answer: a - b, hint: { en: 'Show the bigger number, fold down fingers for the smaller', hi: 'बड़ी संख्या दिखाएं, छोटी के लिए उंगलियां मोड़ें' } };
-    }
-    case 'f-mul': {
-      // Finger multiplication for 6-10: hold up (n-5) fingers
-      const a = Math.floor(Math.random() * 5) + 6; // 6-10
-      const b = Math.floor(Math.random() * 5) + 6; // 6-10
-      if (difficulty === 'easy') {
-        const x = Math.floor(Math.random() * 5) + 6;
-        return { display: `🖐️ ${x} × 2`, answer: x * 2, hint: { en: 'Double the number: show it twice on fingers', hi: 'संख्या को दुगुना करें: उंगलियों पर दो बार दिखाएं' } };
-      }
-      return { display: `🖐️ ${a} × ${b}`, answer: a * b, hint: { en: `Hold up ${a - 5} fingers on left, ${b - 5} on right. Touching = tens, remaining multiply = ones`, hi: `बाएं ${a - 5} उंगली, दाएं ${b - 5} उठाएं। छूने वाली = दहाई, बाकी गुणा = इकाई` } };
-    }
-    case 'f-9table': {
-      const n = Math.floor(Math.random() * 10) + 1; // 1-10
-      return { display: `🖐️ 9 × ${n}`, answer: 9 * n, hint: { en: `Fold finger #${n}. Left of fold = tens, right = ones. Answer: ${n - 1}${10 - n}`, hi: `उंगली #${n} मोड़ें। बाईं ओर = दहाई, दाईं = इकाई` } };
-    }
-    default:
-      return { display: '1 + 1', answer: 2, hint: { en: '', hi: '' } };
-  }
-};
-
-const generateBrainProblem = (difficulty: Difficulty, op: BrainOp): Problem => {
-  switch (op) {
-    case 'b-visual': {
-      // Flash number — remember and type it
-      const digits = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 4;
-      const n = Math.floor(Math.random() * (10 ** digits - 10 ** (digits - 1))) + 10 ** (digits - 1);
-      return { display: `👁️ Remember: ${n}\nWhat was the number?`, answer: n, hint: { en: 'Visualize the number as an image in your mind', hi: 'संख्या को मन में एक चित्र के रूप में देखें' } };
-    }
-    case 'b-speed': {
-      // Quick arithmetic chain
-      const a = Math.floor(Math.random() * 20) + 5;
-      const b = Math.floor(Math.random() * 10) + 1;
-      const c = Math.floor(Math.random() * 5) + 1;
-      if (difficulty === 'easy') {
-        return { display: `⚡ ${a} + ${b} - ${c}`, answer: a + b - c, hint: { en: 'Process left to right quickly!', hi: 'बाएं से दाएं तेजी से हल करें!' } };
-      }
-      const d = Math.floor(Math.random() * 3) + 2;
-      return { display: `⚡ ${a} + ${b} - ${c} × ${d}`, answer: a + b - c * d, hint: { en: 'BODMAS: Multiply first, then add/subtract', hi: 'BODMAS: पहले गुणा, फिर जोड़/घटाव' } };
-    }
-    case 'b-pattern': {
-      // Find the next number in sequence
-      const start = Math.floor(Math.random() * 5) + 1;
-      const step = difficulty === 'easy' ? Math.floor(Math.random() * 5) + 2 : Math.floor(Math.random() * 7) + 3;
-      const isMultiply = difficulty !== 'easy' && Math.random() > 0.5;
-      if (isMultiply) {
-        const base = Math.floor(Math.random() * 3) + 2;
-        const seq = [base, base * 2, base * 4];
-        return { display: `🧩 ${seq[0]}, ${seq[1]}, ${seq[2]}, ?`, answer: base * 8, hint: { en: 'Each number doubles! Multiply by 2', hi: 'हर संख्या दुगुनी! 2 से गुणा करें' } };
-      }
-      const seq = [start, start + step, start + step * 2, start + step * 3];
-      return { display: `🧩 ${seq[0]}, ${seq[1]}, ${seq[2]}, ${seq[3]}, ?`, answer: start + step * 4, hint: { en: `Pattern: adding ${step} each time`, hi: `पैटर्न: हर बार ${step} जोड़ रहे हैं` } };
-    }
-    case 'b-mental': {
-      // Multi-step mental math
-      const a = Math.floor(Math.random() * 30) + 10;
-      const b = Math.floor(Math.random() * 20) + 5;
-      if (difficulty === 'easy') {
-        return { display: `🧠 (${a} + ${b}) × 2`, answer: (a + b) * 2, hint: { en: 'First add, then double the result', hi: 'पहले जोड़ें, फिर परिणाम दुगुना करें' } };
-      }
-      const c = Math.floor(Math.random() * 5) + 2;
-      return { display: `🧠 (${a} + ${b}) × ${c}`, answer: (a + b) * c, hint: { en: 'Solve brackets first, then multiply', hi: 'पहले कोष्ठक हल करें, फिर गुणा' } };
-    }
-    case 'b-focus': {
-      // Reverse number
-      const digits = difficulty === 'easy' ? 2 : difficulty === 'medium' ? 3 : 4;
-      const n = Math.floor(Math.random() * (10 ** digits - 10 ** (digits - 1))) + 10 ** (digits - 1);
-      const reversed = parseInt(String(n).split('').reverse().join(''));
-      return { display: `🎯 Reverse: ${n}`, answer: reversed, hint: { en: 'Read the digits backwards', hi: 'अंकों को उल्टा पढ़ें' } };
-    }
-    default:
-      return { display: '1 + 1', answer: 2, hint: { en: '', hi: '' } };
-  }
-};
-
-const generateVedicProblem = (difficulty: Difficulty, operation: VedicOp): Problem => {
-  const range = difficulty === 'easy' ? 20 : difficulty === 'medium' ? 50 : 100;
-
-  switch (operation) {
-    case '+': {
-      // 50% chance of 3-number addition for medium/hard, always for easy if rand
-      const useThree = Math.random() > 0.5;
-      const a = Math.floor(Math.random() * range) + 1;
-      const b = Math.floor(Math.random() * range) + 1;
-      if (useThree) {
-        const c = Math.floor(Math.random() * range) + 1;
-        const step1 = a + b;
-        const ans = step1 + c;
-        return {
-          display: `${a} + ${b} + ${c}`,
-          answer: ans,
-          hint: { en: 'Add left to right: first add two numbers, then add the third', hi: 'बाएं से दाएं जोड़ें: पहले दो को जोड़ें, फिर तीसरा' },
-          solution: { en: `Step 1: ${a} + ${b} = ${step1}  →  Step 2: ${step1} + ${c} = ${ans}`, hi: `चरण 1: ${a} + ${b} = ${step1}  →  चरण 2: ${step1} + ${c} = ${ans}` },
-        };
-      }
-      const ans2 = a + b;
-      return {
-        display: `${a} + ${b}`,
-        answer: ans2,
-        hint: { en: 'Use Ekadhikena: Add 1 to the previous', hi: 'एकाधिकेन: पिछले में 1 जोड़ें' },
-        solution: { en: `${a} + ${b} = ${ans2}`, hi: `${a} + ${b} = ${ans2}` },
-      };
-    }
-    case '-': {
-      const useThree = Math.random() > 0.5;
-      const a = Math.floor(Math.random() * range) + 10;
-      const b = Math.floor(Math.random() * Math.min(a - 1, range)) + 1;
-      if (useThree) {
-        const maxC = a - b - 1;
-        if (maxC > 1) {
-          const c = Math.floor(Math.random() * Math.min(maxC, range)) + 1;
-          const step1 = a - b;
-          const ans = step1 - c;
-          return {
-            display: `${a} - ${b} - ${c}`,
-            answer: ans,
-            hint: { en: 'Subtract left to right: subtract first number, then the second', hi: 'बाएं से दाएं घटाएं: पहले घटाएं, फिर दूसरा' },
-            solution: { en: `Step 1: ${a} - ${b} = ${step1}  →  Step 2: ${step1} - ${c} = ${ans}`, hi: `चरण 1: ${a} - ${b} = ${step1}  →  चरण 2: ${step1} - ${c} = ${ans}` },
-          };
-        }
-      }
-      const ans2 = a - b;
-      return {
-        display: `${a} - ${b}`,
-        answer: ans2,
-        hint: { en: 'Use Nikhilam: All from 9, last from 10', hi: 'निखिलम: सब 9 से, आखिरी 10 से' },
-        solution: { en: `${a} - ${b} = ${ans2}`, hi: `${a} - ${b} = ${ans2}` },
-      };
-    }
-    case '×': {
-      const a = Math.floor(Math.random() * (difficulty === 'easy' ? 12 : 30)) + 2;
-      const b = Math.floor(Math.random() * (difficulty === 'easy' ? 12 : 15)) + 2;
-      return { display: `${a} × ${b}`, answer: a * b, hint: { en: 'Use Urdhva Tiryagbhyam: Cross multiply', hi: 'ऊर्ध्व तिर्यग्भ्याम: क्रॉस गुणा' } };
-    }
-    case '÷': {
-      const b = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : 20)) + 2;
-      const ans = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : 20)) + 1;
-      return { display: `${b * ans} ÷ ${b}`, answer: ans, hint: { en: 'Use Paravartya: Transpose and adjust', hi: 'परावर्त्य: स्थानांतरित करें' } };
-    }
-    case 'x²': {
-      const n = Math.floor(Math.random() * (difficulty === 'easy' ? 15 : difficulty === 'medium' ? 30 : 50)) + 2;
-      return { display: `${n}²`, answer: n * n, hint: { en: 'Yavadunam: Square = base ± deviation²', hi: 'यावदूनम: वर्ग = आधार ± विचलन²' } };
-    }
-    case '√': {
-      const roots = difficulty === 'easy' ? [2,3,4,5,6,7,8,9,10] : difficulty === 'medium' ? [4,5,6,7,8,9,10,11,12,15,16,20,25] : [9,10,11,12,13,14,15,16,20,25,30];
-      const n = roots[Math.floor(Math.random() * roots.length)];
-      return { display: `√${n * n}`, answer: n, hint: { en: 'Find nearest perfect square', hi: 'निकटतम पूर्ण वर्ग खोजें' } };
-    }
-    case 'x³': {
-      const n = Math.floor(Math.random() * (difficulty === 'easy' ? 8 : 12)) + 2;
-      return { display: `${n}³`, answer: n * n * n, hint: { en: 'Cube = n × n × n. Use Anurupyena for patterns', hi: 'घन = n × n × n. अनुरूप्येण प्रयोग करें' } };
-    }
-    case '∛': {
-      const roots = difficulty === 'easy' ? [2,3,4,5] : difficulty === 'medium' ? [2,3,4,5,6,7,8] : [3,4,5,6,7,8,9,10];
-      const n = roots[Math.floor(Math.random() * roots.length)];
-      return { display: `∛${n * n * n}`, answer: n, hint: { en: 'Last digit of cube root depends on last digit of number', hi: 'घनमूल का अंतिम अंक संख्या के अंतिम अंक पर निर्भर' } };
-    }
-    case '%': {
-      const percents = [10, 15, 20, 25, 30, 50, 75];
-      const p = percents[Math.floor(Math.random() * percents.length)];
-      const base = (difficulty === 'easy' ? [50, 100, 200] : difficulty === 'medium' ? [120, 250, 400, 500] : [360, 480, 750, 840])[Math.floor(Math.random() * 3)];
-      return { display: `${p}% of ${base}`, answer: (p * base) / 100, hint: { en: '10% = move decimal. 50% = half. Build from these!', hi: '10% = दशमलव हटाएं। 50% = आधा। इनसे बनाएं!' } };
-    }
-    case 'alg': {
-      const a = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : 20)) + 1;
-      const b = Math.floor(Math.random() * (difficulty === 'easy' ? 10 : 20)) + 1;
-      const answer = a + b;
-      return { display: `x + ${b} = ${answer}`, answer: a, hint: { en: 'Transpose: x = answer - b. Use Paravartya!', hi: 'स्थानांतरित करें: x = उत्तर - b। परावर्त्य प्रयोग करें!' } };
-    }
-    default:
-      return { display: '1 + 1', answer: 2, hint: { en: '', hi: '' } };
-  }
-};
-
-const generateProblem = (difficulty: Difficulty, operation: Operation): Problem => {
-  if (operation.startsWith('f-')) return generateFingerProblem(difficulty, operation as FingerOp);
-  if (operation.startsWith('b-')) return generateBrainProblem(difficulty, operation as BrainOp);
-  return generateVedicProblem(difficulty, operation as VedicOp);
-};
 
 const topicToCategory = (topic: string | null): PracticeCategory => {
   if (!topic) return 'vedic';
@@ -294,18 +90,12 @@ const PracticePage = () => {
     });
   }, []);
 
-  // Auto-set difficulty based on class grade
-  const getDefaultDifficulty = (): Difficulty => {
-    if (student.classGrade <= 3) return 'easy';
-    if (student.classGrade <= 6) return 'medium';
-    return 'hard';
-  };
-
   const initialCategory = topicToCategory(topicParam);
+  const defaultDiff = classToDefaultDifficulty(student.classGrade);
   const [category, setCategory] = useState<PracticeCategory>(initialCategory);
-  const [difficulty, setDifficulty] = useState<Difficulty>(getDefaultDifficulty());
+  const [difficulty, setDifficulty] = useState<Difficulty>(defaultDiff);
   const [operation, setOperation] = useState<Operation>(topicToOp(topicParam, initialCategory));
-  const [problem, setProblem] = useState<Problem>(generateProblem(getDefaultDifficulty(), topicToOp(topicParam, initialCategory)));
+  const [problem, setProblem] = useState(() => getQuestion(topicToOp(topicParam, initialCategory), defaultDiff, student.level));
   const [userAnswer, setUserAnswer] = useState('');
   const [result, setResult] = useState<'correct' | 'wrong' | null>(null);
   const [score, setScore] = useState(0);
@@ -340,7 +130,7 @@ const PracticePage = () => {
     setCategory(cat);
     const firstOp = categoryOps[cat].ops[0];
     setOperation(firstOp);
-    setProblem(generateProblem(difficulty, firstOp));
+    setProblem(getQuestion(firstOp, difficulty, student.level));
     if (userId) logActivity(userId, 'practice_category', cat);
   };
 
@@ -351,7 +141,7 @@ const PracticePage = () => {
     setTimeLeft(30);
     setTotalAnswered(0);
     setCorrectCount(0);
-    setProblem(generateProblem(difficulty, operation));
+    setProblem(getQuestion(operation, difficulty, student.level));
     setUserAnswer('');
     setResult(null);
     setTimerPaused(false);
@@ -370,18 +160,17 @@ const PracticePage = () => {
     if (userId) logActivity(userId, 'question_result', `${isCorrect ? 'correct' : 'wrong'}:${category}`);
 
     if (isCorrect) {
-      const points = difficulty === 'easy' ? 10 : difficulty === 'medium' ? 20 : 35;
-      setScore(s => s + points + streak * 2);
+      const xpAward = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
+      setScore(s => s + xpAward);
       setStreak(s => s + 1);
       setCorrectCount(c => c + 1);
-      const xpAward = difficulty === 'easy' ? 1 : difficulty === 'medium' ? 2 : 3;
       addXP(xpAward);
       setXpFloat(xpAward);
       setTimeout(() => setXpFloat(null), 1000);
       setTimeout(() => {
         setResult(null);
         setUserAnswer('');
-        setProblem(generateProblem(difficulty, operation));
+        setProblem(getQuestion(operation, difficulty, student.level));
         setShowVedicHint(false);
         setShowSolution(false);
         setQuestionKey(k => k + 1);
@@ -393,14 +182,14 @@ const PracticePage = () => {
       setTimeout(() => {
         setResult(null);
         setUserAnswer('');
-        setProblem(generateProblem(difficulty, operation));
+        setProblem(getQuestion(operation, difficulty, student.level));
         setShowVedicHint(false);
         setShowSolution(false);
         setTimerPaused(false);
         setQuestionKey(k => k + 1);
       }, 3500);
     }
-  }, [userAnswer, problem, difficulty, operation, streak, updateAccuracy]);
+  }, [userAnswer, problem, difficulty, operation, streak, updateAccuracy, student.level]);
 
   const handleKeyPad = (key: string) => {
     if (key === 'del') setUserAnswer(prev => prev.slice(0, -1));
@@ -437,7 +226,7 @@ const PracticePage = () => {
           <div className="flex gap-2">
             {categories.map(cat => (
               <button key={cat} onClick={() => handleCategoryChange(cat)}
-                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${category === cat ? 'gradient-primary text-primary-foreground shadow-warm' : 'bg-card border border-border text-foreground'}`}
+                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${category === cat ? 'gradient-primary text-primary-foreground shadow-warm' : 'bg-card border-2 border-border text-foreground'}`}
               >
                 {t(categoryLabels[cat].en, categoryLabels[cat].hi)}
               </button>
@@ -450,8 +239,8 @@ const PracticePage = () => {
           <h3 className="font-display font-bold text-sm mb-2">{t('Operation', 'संक्रिया')}</h3>
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
             {categoryOps[category].ops.map(op => (
-              <button key={op} onClick={() => { setOperation(op); setProblem(generateProblem(difficulty, op)); }}
-                className={`flex-shrink-0 px-3 py-2.5 rounded-xl font-display font-bold text-xs transition-all ${operation === op ? 'gradient-primary text-primary-foreground shadow-warm' : 'bg-card border border-border text-foreground'}`}
+              <button key={op} onClick={() => { setOperation(op); setProblem(getQuestion(op, difficulty, student.level)); }}
+                className={`flex-shrink-0 px-3 py-2.5 rounded-xl font-display font-bold text-xs transition-all ${operation === op ? 'gradient-primary text-primary-foreground shadow-warm' : 'bg-card border-2 border-border text-foreground'}`}
               >
                 {t(categoryOps[category].labels[op].en, categoryOps[category].labels[op].hi)}
               </button>
@@ -465,7 +254,7 @@ const PracticePage = () => {
           <div className="flex gap-2">
             {difficulties.map(d => (
               <button key={d} onClick={() => setDifficulty(d)}
-                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm capitalize transition-all ${difficulty === d ? 'gradient-warm text-primary-foreground shadow-warm' : 'bg-card border border-border text-foreground'}`}
+                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm capitalize transition-all ${difficulty === d ? 'gradient-warm text-primary-foreground shadow-warm' : 'bg-card border-2 border-border text-foreground'}`}
               >{d}</button>
             ))}
           </div>
@@ -506,7 +295,7 @@ const PracticePage = () => {
           className="h-full gradient-primary rounded-full"
           initial={{ width: '100%' }}
           animate={{ width: timerPaused ? '100%' : '0%' }}
-          transition={{ duration: 10, ease: 'linear' }}
+          transition={{ duration: 30, ease: 'linear' }}
         />
       </div>
 
@@ -583,7 +372,7 @@ const PracticePage = () => {
       <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto w-full pb-2">
         {['1','2','3','4','5','6','7','8','9','del','0','go'].map(key => (
           <button key={key} onClick={() => handleKeyPad(key)}
-            className={`h-12 rounded-xl font-display font-bold text-lg transition-all active:scale-95 ${key === 'go' ? 'gradient-primary text-primary-foreground shadow-warm' : key === 'del' ? 'bg-muted text-muted-foreground' : 'bg-card border border-border text-foreground shadow-card'}`}
+            className={`h-12 rounded-xl font-display font-bold text-lg transition-all active:scale-95 ${key === 'go' ? 'gradient-primary text-primary-foreground shadow-warm' : key === 'del' ? 'bg-muted text-muted-foreground' : 'bg-card border-2 border-border text-foreground shadow-card'}`}
           >
             {key === 'del' ? '⌫' : key === 'go' ? <Check className="w-5 h-5 mx-auto" /> : key}
           </button>
